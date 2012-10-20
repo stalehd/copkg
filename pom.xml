@@ -1,0 +1,30 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+
+  <groupId>org.cloudname</groupId>
+  <artifactId>copkg-assembly</artifactId>
+  <version>1.0.0</version>
+  <packaging>jar</packaging>
+  
+  <name>copkg</name>
+  <url>https://github.com/Cloudname/cloudname</url>
+  <description>Assembly descriptor for the copkg package format</description>
+
+  <organization>
+    <name>Cloudname Project</name>
+    <url>https://github.com/Cloudname/cloudname</url>
+  </organization>
+
+  <developers>
+    <developer>
+      <id>borud</id>
+      <name>Bjorn Borud</name>
+      <email>bborud@gmail.com</email>
+    </developer>
+  </developers>
+  
+  <properties>
+    <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+  </properties>
+</project>
