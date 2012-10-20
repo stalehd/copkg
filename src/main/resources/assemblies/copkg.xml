@@ -12,16 +12,16 @@
   <fileSets>
     <fileSet>
       <!-- Include static configuration -->
-      <directory>src/copkg/etc</directory>
+      <directory>src/main/copkg/etc</directory>
       <outputDirectory>etc</outputDirectory>
       <includes>
-	<include>*</include>
+	<include>**</include>
       </includes>
     </fileSet>
     
     <fileSet>
       <!-- Include scripts for starting and stopping artifact -->
-      <directory>src/copkg/script.d</directory>
+      <directory>src/main/copkg/script.d</directory>
       <outputDirectory>etc</outputDirectory>
       <useStrictFiltering>true</useStrictFiltering>
       <includes>
@@ -32,10 +32,10 @@
     
     <fileSet>
       <!-- Include files that do not fit in bin or etc -->
-      <directory>src/copkg/lib</directory>
+      <directory>src/main/copkg/lib</directory>
       <outputDirectory>lib</outputDirectory>
       <includes>
-	<include>*</include>
+	<include>**</include>
       </includes>
     </fileSet>
     
@@ -44,7 +44,7 @@
       <directory>target</directory>
       <outputDirectory>bin</outputDirectory>
       <includes>
-	<include>*.jar</include>
+	<include>*jar-with-dependencies.jar</include>
       </includes>
     </fileSet>
   </fileSets>
