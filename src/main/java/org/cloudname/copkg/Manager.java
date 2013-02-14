@@ -78,17 +78,21 @@ public class Manager {
             .setUrl(url)
             .build();
 
-        Response response = client.get(new FileBodyConsumer(new RandomAccessFile(destinationFile, "rw"))).get();
-        client.close();
+        try {
+            Response response = client.get(new FileBodyConsumer(new RandomAccessFile(destinationFile, "rw"))).get();
 
-        // If the response code indicates anything other than 200 we
-        // will end up with a file that contains junk.  We have to
-        // make sure we delete it.
-        if (response.getStatusCode() != 200) {
-            destinationFile.delete();
-            log.warning("Download failed. Status = " + response.getStatusCode() + ", msg = " + response.getStatusText());
+            // If the response code indicates anything other than 200 we
+            // will end up with a file that contains junk.  We have to
+            // make sure we delete it.
+            if (response.getStatusCode() != 200) {
+                destinationFile.delete();
+                log.warning("Download failed. Status = " + response.getStatusCode() + ", msg = " + response.getStatusText());
+            }
+            return response.getStatusCode();
+
+        } finally {
+            client.close();
         }
-        return response.getStatusCode();
     }
 
     /**
