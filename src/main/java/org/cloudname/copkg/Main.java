@@ -1,5 +1,10 @@
 package org.cloudname.copkg;
 
+import org.cloudname.copkg.util.LogSetup;
+
+import org.cloudname.flags.Flag;
+import org.cloudname.flags.Flags;
+
 import java.io.File;
 import java.io.IOException;
 
@@ -24,6 +29,27 @@ public class Main {
     public static final String COPKG_HOME_PACKAGE_DIR = "packages";
     public static final String COPKG_DEFAULT_PACKAGE_URL = "http://packages.skunk-works.no/copkg";
 
+    // Flags
+    @Flag(name = "repos", description = "Package Repository URL")
+    public static String optRepos = null;
+
+    @Flag(name = "dir", description = "Package install directory")
+    public static String optDir = null;
+
+    @Flag(name = "install", description = "Install package given by coordinate")
+    public static String optInstall = null;
+
+    @Flag(name = "uninstall", description = "Uninstall package given by coordinate")
+    public static String optUninstall = null;
+
+    @Flag(name = "list", description="List installed package coordinates")
+    public static boolean optList = false;
+
+    @Flag(name = "resolve", description = "Resolve coordinate into path and URL")
+    public static String optResolve = null;
+
+    private static Flags flags;
+
     private Manager manager;
     private Configuration config;
 
@@ -39,16 +65,18 @@ public class Main {
      * Main entry point.
      */
     public static void main(String[] args) throws Exception {
-        if (args.length < 1) {
-            System.out.println("\n"
-                               + "Usage: install <coordinate>   - install package given by coordinaten\n"
-                               + "       uninstall <coordinate> - uninstall package given by coordinate\n"
-                               + "       list                   - list installed packages\n"
-                               + "       resolve <coordinate>   - output paths and URLs for a given coordinate\n"
+        // Parse flags
+        flags = new Flags()
+            .loadOpts(Main.class)
+            .parse(args);
 
-            );
+        if (flags.helpFlagged()) {
+            flags.printHelp(System.out);
             return;
         }
+
+        // Make logging usable for interactive users
+        LogSetup.setup();
 
         // TODO(borud): add explicit overrides to config so that we
         // can specify config on the command line which will override
@@ -56,41 +84,36 @@ public class Main {
         Configuration config = makeOrFindConfiguration();
 
         Main m = new Main(config);
-        m.dispatch(args);
+        m.dispatch();
     }
 
     /**
      * Dispatch commands
      */
-    private void dispatch(String[] args) throws Exception {
-        String command = args[0];
+    private void dispatch() throws Exception {
 
-        if ("install".equals(command)) {
-            String param = args[1];
-            install(param);
+        if (optInstall != null) {
+            install(optInstall);
             return;
         }
 
-        if ("uninstall".equals(command)) {
-            String param = args[1];
-            uninstall(param);
+        if (optUninstall != null) {
+            uninstall(optUninstall);
             return;
         }
 
 
-        if ("list".equals(command)) {
+        if (optList) {
             list();
             return;
         }
 
-        if ("resolve".equals(command)) {
-            String param = args[1];
-            resolve(param);
+        if (optResolve != null) {
+            resolve(optResolve);
             return;
         }
 
-        System.out.println("Command " + command + " not implemented");
-        return;
+        flags.printHelp(System.out);
     }
 
 
@@ -113,7 +136,7 @@ public class Main {
      */
     private void uninstall(String coordinateString) {
         // TODO(borud): implement
-        log.warning("Not implemented yet");
+        log.warning("Uninstall not implemented yet");
     }
 
     /**
@@ -121,7 +144,7 @@ public class Main {
      */
     private void list() {
         // TODO(borud): implement
-        log.warning("Not implemented yet");
+        log.warning("List not implemented yet");
     }
 
     /**
@@ -137,11 +160,21 @@ public class Main {
 
     /**
      * Find configuration or make an appropriate default
-     * configuration.  Will look in user's home directory first, then
-     * /etc and then finally revert to defaults.
+     * configuration.  Will look in /etc and the user's home directory
+     * as well as take command line options into consideration.
+     *
      */
     private static Configuration makeOrFindConfiguration() throws IOException {
-        // First we try the users home directory
+        String installDir = System.getProperty("user.home") + File.separatorChar + COPKG_HOME_PACKAGE_DIR;
+        String reposUrl = COPKG_DEFAULT_PACKAGE_URL;
+        Configuration c = new Configuration(installDir, reposUrl);
+
+        File etc = new File("/etc/" + COPKG_ETC_DIR + "/" + COPKG_CONFIG_FILE);
+        if (etc.exists()) {
+            log.info("Getting configuration from " + etc.getAbsolutePath());
+            c = Configuration.fromFile(etc);
+        }
+
         File home = new File(
             System.getProperty("user.home")
             + File.separatorChar
@@ -150,20 +183,20 @@ public class Main {
             + COPKG_CONFIG_FILE);
         if (home.exists()) {
             log.info("Getting configuration from " + home.getAbsolutePath());
-            return Configuration.fromFile(home);
+            c = Configuration.fromFile(home);
         }
 
-        // ...then we try /etc (no need to use platform independent
-        // separator chars here)
-        File etc = new File("/etc/" + COPKG_ETC_DIR + "/" + COPKG_CONFIG_FILE);
-        if (etc.exists()) {
-            log.info("Getting configuration from " + home.getAbsolutePath());
-            return Configuration.fromFile(etc);
+        if (optDir != null) {
+            c = new Configuration(optDir, c.getPackageBaseUrl());
+            log.info("Set package dir to " + optDir);
         }
 
-        // No configuration could be found so we fall back to defaults
-        String packageDir = System.getProperty("user.home") + File.separatorChar + COPKG_HOME_PACKAGE_DIR;
-        log.info("Using default config ");
-        return new Configuration(packageDir, COPKG_DEFAULT_PACKAGE_URL);
+        if (optRepos != null) {
+            c = new Configuration(c.getPackageDir(), optRepos);
+            log.info("Set repos URL to " + optRepos);
+        }
+
+
+        return c;
     }
 }
