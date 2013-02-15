@@ -15,7 +15,7 @@
       <directory>src/main/copkg/etc</directory>
       <outputDirectory>etc</outputDirectory>
       <includes>
-	<include>*</include>
+	<include>**</include>
       </includes>
     </fileSet>
     
@@ -35,7 +35,7 @@
       <directory>src/main/copkg/lib</directory>
       <outputDirectory>lib</outputDirectory>
       <includes>
-	<include>*</include>
+	<include>**</include>
       </includes>
     </fileSet>
     
