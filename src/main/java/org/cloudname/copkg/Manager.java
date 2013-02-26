@@ -1,6 +1,7 @@
 package org.cloudname.copkg;
 
 import org.cloudname.copkg.util.Unzip;
+import org.cloudname.copkg.util.Traverse;
 
 import com.ning.http.client.Response;
 import com.ning.http.client.SimpleAsyncHttpClient;
@@ -34,6 +35,7 @@ public class Manager {
     private static final int MAX_NUM_REDIRECTS = 3;
 
     private static final String UNPACK_DIR_SUFFIX = "unpack";
+    private static final String REMOVE_DIR_SUFFIX = "remove";
 
     private Configuration config;
 
@@ -65,8 +67,8 @@ public class Manager {
 
         final String url = coordinate.toUrl(config.getPackageBaseUrl());
 
-        log.info("destination dir  = " + destinationDir.getAbsolutePath());
-        log.info("destination file = " + destinationFile.getAbsolutePath());
+        log.fine("destination dir  = " + destinationDir.getAbsolutePath());
+        log.fine("destination file = " + destinationFile.getAbsolutePath());
 
         // Make client
         SimpleAsyncHttpClient client = new SimpleAsyncHttpClient.Builder()
@@ -143,6 +145,62 @@ public class Manager {
         if (! unpackDir.renameTo(targetDir)) {
             log.warning("Unable to rename from " + unpackDir.getAbsolutePath()
                         + " to " + targetDir.getAbsolutePath());
+            return;
         }
+
+        log.info("Installed " + coordinate.toString() + " into " + targetDir);
+    }
+
+    /**
+     * Uninstall package.  Renames the enclosing directory before
+     * proceeding to delete it so that the directory is not allowed to
+     * exist in a half removed state (recursive delete of directory
+     * trees is not atomic).  Removes as much of the path as possible.
+     *
+     * @param coordinate the coordinate we wish to uninstall
+     */
+    public void uninstall(PackageCoordinate coordinate) throws Exception {
+        File targetDir = new File(config.getPackageDir()
+                                  + File.separatorChar
+                                  + coordinate.getPathFragment());
+
+        File removeDir = new File(targetDir.getAbsolutePath()
+                                  + "---"
+                                  + REMOVE_DIR_SUFFIX);
+
+        // First check if there is a leftover removeDir and nuke it
+        if (removeDir.exists()) {
+            log.info("Found incomplete uninstall.  Cleaning up.");
+            new Traverse() {
+                @Override public void after(final File f) {
+                    f.delete();
+                    log.info("Removed " + f.getAbsolutePath());
+                }
+            };
+        }
+
+        if (! targetDir.exists()) {
+            log.warning("Target dir " + targetDir.getAbsolutePath() + " does not exist");
+            return;
+        }
+
+        // Renaming is atomic which means we can rename and then take
+        // our time removing the files recursively.
+        if (! targetDir.renameTo(removeDir)) {
+            log.warning("Unable to rename " + targetDir.getAbsolutePath() + " to " + removeDir.getAbsolutePath());
+        }
+
+        // Traverse the directory and recursively delete everything in it.
+        new Traverse() {
+            @Override public void after(final File f) {
+                if (! f.delete()) {
+                    log.warning("Failed to delete " + f.getAbsolutePath());
+                    return;
+                }
+                log.info("Deleted " + f.getAbsolutePath());
+            }
+        }.traverse(removeDir);
+
+        log.info("Uninstalled " + coordinate.toString());
     }
 }

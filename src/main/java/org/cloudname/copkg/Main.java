@@ -134,9 +134,9 @@ public class Main {
      * @param coordinateString the coordinate string of the package we
      *   wish to uninstall.
      */
-    private void uninstall(String coordinateString) {
-        // TODO(borud): implement
-        log.warning("Uninstall not implemented yet");
+    private void uninstall(String coordinateString) throws Exception {
+        PackageCoordinate coordinate = PackageCoordinate.parse(coordinateString);
+        manager.uninstall(coordinate);
     }
 
     /**
@@ -188,12 +188,10 @@ public class Main {
 
         if (optDir != null) {
             c = new Configuration(optDir, c.getPackageBaseUrl());
-            log.info("Set package dir to " + optDir);
         }
 
         if (optRepos != null) {
             c = new Configuration(c.getPackageDir(), optRepos);
-            log.info("Set repos URL to " + optRepos);
         }
 
 

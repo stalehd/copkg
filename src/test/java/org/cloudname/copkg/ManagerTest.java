@@ -75,4 +75,22 @@ public class ManagerTest {
         assertFalse("File existed", downloadedFile.exists());
     }
 
+    @Test
+    public void testInstallUninstall() throws Exception {
+        PackageCoordinate coordinate = PackageCoordinate.parse("com.example:artifact:1.2.3");
+        Manager m = new Manager(config);
+        m.install(coordinate);
+
+        String installDir = config.getPackageDir() + File.separatorChar + coordinate.getPathFragment();
+        assertTrue(new File(installDir).exists());
+        assertTrue(new File(installDir + File.separatorChar + "bin").exists());
+        assertTrue(new File(installDir + File.separatorChar + "etc").exists());
+        assertTrue(new File(installDir + File.separatorChar + "lib").exists());
+        assertTrue(new File(installDir + File.separatorChar + "script.d").exists());
+
+        // Now uninstall the package
+        m.uninstall(coordinate);
+        assertFalse(new File(installDir).exists());
+    }
+
 }
