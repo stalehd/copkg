@@ -14,8 +14,9 @@
       <!-- Include static configuration -->
       <directory>src/main/copkg/etc</directory>
       <outputDirectory>etc</outputDirectory>
+      <filtered>true</filtered>
       <includes>
-	<include>**</include>
+        <include>**</include>
       </includes>
     </fileSet>
     
@@ -24,9 +25,10 @@
       <directory>src/main/copkg/script.d</directory>
       <outputDirectory>etc</outputDirectory>
       <useStrictFiltering>true</useStrictFiltering>
+      <filtered>true</filtered>
       <includes>
-	<include>start.sh</include>
-	<include>stop.sh</include>
+        <include>start.sh</include>
+        <include>stop.sh</include>
       </includes>
     </fileSet>
     
@@ -35,7 +37,7 @@
       <directory>src/main/copkg/lib</directory>
       <outputDirectory>lib</outputDirectory>
       <includes>
-	<include>**</include>
+        <include>**</include>
       </includes>
     </fileSet>
     
@@ -43,8 +45,9 @@
       <!-- Include include built targets -->
       <directory>target</directory>
       <outputDirectory>bin</outputDirectory>
+      <useStrictFiltering>true</useStrictFiltering>
       <includes>
-	<include>*jar-with-dependencies.jar</include>
+        <include>*.jar</include>
       </includes>
     </fileSet>
   </fileSets>
