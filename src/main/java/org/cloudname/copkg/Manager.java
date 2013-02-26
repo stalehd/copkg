@@ -55,6 +55,7 @@ public class Manager {
      * communicating back a bit more than just the return code.
      *
      * @param coordinate Package Coordinate of the package we wish to download.
+     * @throws Exception fails on any and all exceptions.
      */
     public int download(PackageCoordinate coordinate) throws Exception {
         final String downloadFilename = config.downloadFilenameForCoordinate(coordinate);
@@ -98,7 +99,11 @@ public class Manager {
     }
 
     /**
-     * Download, verify, unpack and verify installed
+     * Install a package given by coordinate.
+     *
+     * @param coordinate the coordinate of the package we wish to
+     *   install.
+     * @throws Exception fails on any and all exceptions.
      */
     public void install(PackageCoordinate coordinate) throws Exception {
         File targetDir = new File(config.getPackageDir()
