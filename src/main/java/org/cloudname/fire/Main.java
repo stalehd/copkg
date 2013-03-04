@@ -7,7 +7,10 @@ import java.util.Map;
 import java.util.HashMap;
 
 /**
- *
+ * Main class for Fire.  Fire is a facility for starting services that
+ * have been packaged using copkg.  You can run Fire on the command
+ * line in order to Fire up (heh heh) services or you can run it as a
+ * daemon with a REST API.
  *
  * TODO(borud): support starting and stopping packages on remote hosts
  *   (using REST API behind the scenes)
@@ -78,7 +81,6 @@ public class Main {
         return map;
     }
 
-
     /**
      * Start Fire in daemon mode.  Starts up server and presents REST
      * API to the world.
@@ -102,6 +104,7 @@ public class Main {
         String packageCoordinate = args[2];
 
         Map<String, String> params = getParams(3, args);
+
         Job job = new Job(serviceCoordinate, packageCoordinate, params);
         System.out.println(job);
     }
