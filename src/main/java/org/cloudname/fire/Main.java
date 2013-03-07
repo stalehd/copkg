@@ -70,10 +70,8 @@ public class Main {
                 String key = m.group(1);
                 String val = m.group(3);
 
-                if (val == null) {
-                    val = "";
-                }
-
+                // val is allowed to be null.  This indicates a param
+                // with no args.J
                 map.put(key, val);
             }
         }

@@ -6,14 +6,29 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.SerializationFeature;
 
 import java.util.Map;
+import java.util.TreeSet;
+import java.util.Collections;
 import java.io.IOException;
 
 /**
- * Job description.
+ * Job description.  A job consists of:
+ *
+ * <ul>
+ *   <li> service coordinate
+ *   <li> package coordinate
+ *   <li> a key/value map of parameters
+ * </ul>
+ *
+ * To indicate that a parameter that takes no value is present a key
+ * pointing to {@code null} is added to the map.
+ *
+ * TODO(borud): implement hashCode() and equals() if needed.
  *
  * @author borud
  */
 public class Job {
+    public static final String NOARGS_MARKER = new String("###flagflagflag###");
+
     private String serviceCoordinate;
     private String packageCoordinate;
     private Map<String,String> params;
@@ -63,6 +78,35 @@ public class Job {
         } catch (IOException e) {
             return null;
         }
+    }
+
+    /**
+     * Get the parameters formatted as command line options.  In order
+     * to get the parameters predictably, the parameters will be
+     * sorted in lexical order.
+     *
+     * @return the parameters formatted as command line options.
+     */
+    public String paramsAsOptions() {
+        StringBuilder buff = new StringBuilder();
+        boolean first = true;
+
+        for (String key : new TreeSet<String>(params.keySet())) {
+            String value = params.get(key);
+            buff.append((first?"--":" --"))
+                .append(key);
+
+            // A null value means that the flag was present but had no
+            // options.
+            if (value != null) {
+                buff.append("=\"")
+                    .append(value)
+                    .append("\"");
+            }
+
+            first = false;
+        }
+        return buff.toString();
     }
 
     @Override
