@@ -124,6 +124,11 @@ public class Manager {
     /**
      * Install a package given by coordinate.
      *
+     * TODO(borud): change strategy somewhat with regard to
+     *   unpack-dir.  Give it a randomized name and check for
+     *   collision.  The current method is better than simply
+     *   unpacking but it isn't entirely bullet-proof.
+     *
      * @param coordinate the coordinate of the package we wish to
      *   install.
      * @throws Exception fails on any and all exceptions.
@@ -156,8 +161,8 @@ public class Manager {
 
         // Create a directory for unpacking.
         //
-        // TODO(borud): this is where we want to add some form of
-        // dotlocking later to make it possible to run concurrent
+        // TODO(borud): this is where we *might* want to add some form
+        // of dotlocking later to make it possible to run concurrent
         // installs from different processes as long as they operate
         // on different packages.  This is preferable to having a
         // master lock.
