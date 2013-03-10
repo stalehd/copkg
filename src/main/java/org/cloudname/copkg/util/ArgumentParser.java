@@ -59,6 +59,9 @@ public class ArgumentParser {
                 String option = m.group(2);
                 String value = m.group(4);
                 arguments.add(new Argument(option, value, prefix));
+            } else {
+                // Add as bare word with no prefix and no value
+                arguments.add(new Argument(arg, null, ""));
             }
         }
         return arguments;
