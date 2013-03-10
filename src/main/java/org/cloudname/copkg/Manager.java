@@ -227,7 +227,7 @@ public class Manager {
                     log.warning("Failed to delete " + f.getAbsolutePath());
                     return;
                 }
-                log.info("Deleted " + f.getAbsolutePath());
+                log.fine("Deleted " + f.getAbsolutePath());
             }
         }.traverse(removeDir);
 

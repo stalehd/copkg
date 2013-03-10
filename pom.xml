@@ -69,7 +69,7 @@
 		  </manifestEntries>
 		</transformer>
 	      </transformers>
-	      <finalName>copkg</finalName>
+	      <finalName>${project.artifactId}-${project.version}-jar-with-dependencies</finalName>
 	    </configuration>
 	  </execution>
 	</executions>
