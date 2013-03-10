@@ -4,20 +4,8 @@
 
 List of commands that we want to implement in command line utility.
 
-- `install {coordinate}` - Installs package given by `{coordinate}`.
-- `uninstall {coordinate}` - Uninstalls package given by `{coordinate}`.
 - `list` - list installed packages
 
-## Sanity checking
-- Have some form of sanity checking on Package Coordinates.  Mostly to
-  make sure people do not come up with divergent schemes.
-
-## Package integrity
-- Add MD5 checksum for all files in a package
-- Add verification step to the unpacking process
-  - verify checksums
-  - ensure required files are present
-  
 ## Download
 - Support for authentication (Basic-auth?  What does Maven use?)
 - Support for multiple concurrent downloads
@@ -25,6 +13,17 @@ List of commands that we want to implement in command line utility.
 - Support for graceful cancelling of download
 - Support for multiple software repositories
 - Support for listing packages available from package repository
+
+## Package integrity
+- Add MD5 checksum for all files in a package
+- Add verification step to the unpacking process
+  - verify checksums
+  - ensure required files are present
+
+## Sanity checking
+- Have some form of sanity checking on Package Coordinates.  Mostly to
+  make sure people do not come up with divergent schemes.
+
 
 ## Extra features
 - Support for bundles.  A bundle is a meta-package that represents several packages.  

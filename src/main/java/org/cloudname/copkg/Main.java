@@ -42,9 +42,6 @@ public class Main {
     @Flag(name = "uninstall", description = "Uninstall package given by coordinate")
     public static String optUninstall = null;
 
-    @Flag(name = "list", description="List installed package coordinates")
-    public static boolean optList = false;
-
     @Flag(name = "resolve", description = "Resolve coordinate into path and URL")
     public static String optResolve = null;
 
@@ -102,12 +99,6 @@ public class Main {
             return;
         }
 
-
-        if (optList) {
-            list();
-            return;
-        }
-
         if (optResolve != null) {
             resolve(optResolve);
             return;
@@ -134,17 +125,9 @@ public class Main {
      * @param coordinateString the coordinate string of the package we
      *   wish to uninstall.
      */
-    private void uninstall(String coordinateString) {
-        // TODO(borud): implement
-        log.warning("Uninstall not implemented yet");
-    }
-
-    /**
-     * List installed packages.  Lists package coordinates.
-     */
-    private void list() {
-        // TODO(borud): implement
-        log.warning("List not implemented yet");
+    private void uninstall(String coordinateString) throws Exception {
+        PackageCoordinate coordinate = PackageCoordinate.parse(coordinateString);
+        manager.uninstall(coordinate);
     }
 
     /**
@@ -188,12 +171,10 @@ public class Main {
 
         if (optDir != null) {
             c = new Configuration(optDir, c.getPackageBaseUrl());
-            log.info("Set package dir to " + optDir);
         }
 
         if (optRepos != null) {
             c = new Configuration(c.getPackageDir(), optRepos);
-            log.info("Set repos URL to " + optRepos);
         }
 
 
