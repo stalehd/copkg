@@ -88,14 +88,33 @@ public class Main {
     private static void printHelp() {
         System.out.println(
             "\n"
-            + "Commands:\n"
-            + "  copkg [flags] install <coordinate>   : install the package\n"
-            + "  copkg [flags] uninstall <coordinate> : uninstall the package\n"
-            + "  copkg [flags] resolve <coordinate>   : print paths and URLs for a given package coordinate\n"
-            + "\n"
             + "Flags:\n"
-            + "    --package-dir=<dir>                : where to install packages\n"
-            + "    --repository=<dir>                 : where to fetch packages from\n"
+            + "----------------------------------------------------------------------------------------------------\n"
+            + "    --package-dir=<dir>   : where to install packages\n"
+            + "    --repository=<dir>    : where to fetch packages from\n"
+            + "    --state-dir=<dir>     : where to to keep state when daemon\n"
+            + "    --port=<port number>  : which port to make REST interface available on\n"
+            + "\n"
+            + "Package commands:\n"
+            + "----------------------------------------------------------------------------------------------------\n"
+            + "  copkg [flags] install <package coordinate>   : install the package\n"
+            + "  copkg [flags] uninstall <package coordinate> : uninstall the package\n"
+            + "  copkg [flags] resolve <package coordinate>   : print paths and URLs for a given package coordinate\n"
+            + "\n"
+            + "Service lifecycle management:\n"
+            + "----------------------------------------------------------------------------------------------------\n"
+            + "  copkg [flags] start <package coordinate> --runtime-dir=<dir> -- [start params]\n"
+            + "      : Start service with package coordinate in a given runtime directory.  Parameters\n"
+            + "        to service are added after the \"--\" marker\n"
+            + "\n"
+            + "  copkg [flags] stop --runtime-dir=<dir>\n"
+            + "      : Stop service with a given runtime directory\n"
+            + "\n"
+            + "  copkg [flags] status --runtime-dir=<dir>\n"
+            + "      : Show status for a service with a given runtime directory\n"
+            + "\n"
+            + "  copkg [flags] daemon [--state-dir=<dir> --port=<port number>]\n"
+            + "      : Become daemon\n"
             + "\n"
         );
     }
@@ -163,6 +182,34 @@ public class Main {
             return;
         }
 
+        // TODO(borud): implement.
+        if ("start".equals(command.getOption())) {
+            System.out.println("\nNot implemented yet: " + command.getOption());
+            printHelp();
+            return;
+        }
+
+        // TODO(borud): implement.
+        if ("stop".equals(command.getOption())) {
+            System.out.println("\nNot implemented yet: " + command.getOption());
+            printHelp();
+            return;
+        }
+
+        // TODO(borud): implement.
+        if ("status".equals(command.getOption())) {
+            System.out.println("\nNot implemented yet: " + command.getOption());
+            printHelp();
+            return;
+        }
+
+        // TODO(borud): implement.
+        if ("daemon".equals(command.getOption())) {
+            System.out.println("\nNot implemented yet: " + command.getOption());
+            printHelp();
+            return;
+        }
+
         System.out.println("\nUnknown command: " + command.getOption());
 
         printHelp();
@@ -197,11 +244,11 @@ public class Main {
      */
     private void resolve(String coordinateString) {
         PackageCoordinate coordinate = PackageCoordinate.parse(coordinateString);
-        System.out.println("\n");
+        System.out.println("");
         System.out.println("installDir       = " + config.getPackageDir() + File.separatorChar + coordinate.getPathFragment());
         System.out.println("downloadUrl      = " + coordinate.toUrl(config.getPackageBaseUrl()));
         System.out.println("downloadFilename = " + config.downloadFilenameForCoordinate(coordinate));
-        System.out.println("\n");
+        System.out.println("");
     }
 
     /**
