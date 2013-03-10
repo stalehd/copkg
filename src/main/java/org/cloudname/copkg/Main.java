@@ -41,6 +41,12 @@ public class Main {
     private static OptionSpec<String> packageDir =
         optionParser.accepts("package-dir").withRequiredArg().ofType(String.class);
 
+    private static OptionSpec<String> username =
+        optionParser.accepts("username").withRequiredArg().ofType(String.class);
+
+    private static OptionSpec<String> password =
+        optionParser.accepts("password").withRequiredArg().ofType(String.class);
+
     private static OptionSpec<Void> help = optionParser.accepts("help").forHelp();
 
     private static OptionSet optionSet;
@@ -94,6 +100,8 @@ public class Main {
             + "    --repository=<dir>    : where to fetch packages from\n"
             + "    --state-dir=<dir>     : where to to keep state when daemon\n"
             + "    --port=<port number>  : which port to make REST interface available on\n"
+            + "    --username=<username> : username used for BASIC auth at repository\n"
+            + "    --password=<password> : password used for BASUC auth at repository\n"
             + "\n"
             + "Package commands:\n"
             + "----------------------------------------------------------------------------------------------------\n"
@@ -279,12 +287,24 @@ public class Main {
             c = Configuration.fromFile(home);
         }
 
+        // The following is not the most elegant code, but it was
+        // quick to write.  The Configuration class should have a
+        // cascade/merge method instead.
+
         if (optionSet.has(packageDir)) {
             c = new Configuration(optionSet.valueOf(packageDir), c.getPackageBaseUrl(), c.getUsername(), c.getPassword());
         }
 
         if (optionSet.has(repository)) {
             c = new Configuration(c.getPackageDir(), optionSet.valueOf(repository), c.getUsername(), c.getPassword());
+        }
+
+        if (optionSet.has(username)) {
+            c = new Configuration(c.getPackageDir(), c.getPackageBaseUrl(), optionSet.valueOf(username), c.getPassword());
+        }
+
+        if (optionSet.has(password)) {
+            c = new Configuration(c.getPackageDir(), c.getPackageBaseUrl(), c.getUsername(), optionSet.valueOf(password));
         }
 
         return c;
