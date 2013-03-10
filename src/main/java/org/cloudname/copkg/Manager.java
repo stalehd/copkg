@@ -6,6 +6,8 @@ import org.cloudname.copkg.util.Traverse;
 import com.ning.http.client.Response;
 import com.ning.http.client.SimpleAsyncHttpClient;
 import com.ning.http.client.consumers.FileBodyConsumer;
+import com.ning.http.client.simple.HeaderMap;
+import com.ning.http.client.simple.SimpleAHCTransferListener;
 
 import java.io.File;
 import java.io.IOException;
@@ -71,14 +73,35 @@ public class Manager {
         log.fine("destination dir  = " + destinationDir.getAbsolutePath());
         log.fine("destination file = " + destinationFile.getAbsolutePath());
 
+        SimpleAHCTransferListener listener = new SimpleAHCTransferListener() {
+                private long last = System.currentTimeMillis();
+
+                @Override public void onBytesReceived(String url, long amount, long current, long total) {
+                    // Only output progress once every 1000 milliseconds
+                    long now = System.currentTimeMillis();
+                    if ((now - last) > 1000) {
+                        last = now;
+                        long percent = (amount * 100) / total;
+                        log.info(" - Received " + amount + " of " + total + " bytes (" + percent + "%)");
+                    }
+                }
+
+                @Override public void onBytesSent(String url, long amount, long current, long total) {}
+                @Override public void onCompleted(String url, int statusCode, String statusText) {}
+                @Override public void onHeaders(String url, HeaderMap headers) {}
+                @Override public void onStatus(String url, int statusCode, String statusText) {}
+            };
+
         // Make client
         SimpleAsyncHttpClient client = new SimpleAsyncHttpClient.Builder()
             .setRequestTimeoutInMs(REQUEST_TIMEOUT_MS)
             .setFollowRedirects(true)
+            .setCompressionEnabled(true)
             .setMaximumNumberOfRedirects(MAX_NUM_REDIRECTS)
             .setMaxRequestRetry(MAX_RETRY_ON_IOEXCEPTION)
             .setMaximumConnectionsPerHost(MAX_CONNECTIONS_PER_HOST)
             .setUrl(url)
+            .setListener(listener)
             .build();
 
         try {
@@ -141,6 +164,8 @@ public class Manager {
         File unpackDir = new File(targetDir.getAbsolutePath()
                                   + "---"
                                   + UNPACK_DIR_SUFFIX);
+
+        log.fine("Unpacking " + downloadFile + " into " + unpackDir);
         unpackDir.mkdirs();
 
         // Now unzip the file into the unpack dir
