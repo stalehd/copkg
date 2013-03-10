@@ -34,7 +34,7 @@ public class ManagerTest {
         String baseUrl = "http://localhost:" + port;
         File packageFolder = testFolder.newFolder("packages");
 
-        config = new Configuration(packageFolder.getAbsolutePath(), baseUrl);
+        config = new Configuration(packageFolder.getAbsolutePath(), baseUrl, "foo", "bar");
 
         httpServer = new StaticHttpServer(port, "src/test/resources/staticroot");
         httpServer.start();

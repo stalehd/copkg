@@ -18,6 +18,8 @@ public class ConfigurationTest {
     private static final String packageDir = "/some/root";
     private static final String downloadDir = packageDir + File.separatorChar + Configuration.DOWNLOAD_DIR;
     private static final String baseUrl = "http://localhost/packages";
+    private static final String username = "foo";
+    private static final String password = "bar";
 
     private static final PackageCoordinate coordinate = new PackageCoordinate(
         "org.cloudname",
@@ -25,7 +27,7 @@ public class ConfigurationTest {
         "1.2.3"
     );
 
-    Configuration config = new Configuration(packageDir, baseUrl);
+    Configuration config = new Configuration(packageDir, baseUrl, username, password);
 
     /**
      * Test that the paths turn out as expected.

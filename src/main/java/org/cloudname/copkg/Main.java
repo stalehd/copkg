@@ -213,7 +213,7 @@ public class Main {
     private static Configuration makeOrFindConfiguration() throws IOException {
         String installDir = System.getProperty("user.home") + File.separatorChar + COPKG_HOME_PACKAGE_DIR;
         String reposUrl = COPKG_DEFAULT_PACKAGE_URL;
-        Configuration c = new Configuration(installDir, reposUrl);
+        Configuration c = new Configuration(installDir, reposUrl, "", "");
 
         File etc = new File("/etc/" + COPKG_ETC_DIR + "/" + COPKG_CONFIG_FILE);
         if (etc.exists()) {
@@ -233,11 +233,11 @@ public class Main {
         }
 
         if (optionSet.has(packageDir)) {
-            c = new Configuration(optionSet.valueOf(packageDir), c.getPackageBaseUrl());
+            c = new Configuration(optionSet.valueOf(packageDir), c.getPackageBaseUrl(), c.getUsername(), c.getPassword());
         }
 
         if (optionSet.has(repository)) {
-            c = new Configuration(c.getPackageDir(), optionSet.valueOf(repository));
+            c = new Configuration(c.getPackageDir(), optionSet.valueOf(repository), c.getUsername(), c.getPassword());
         }
 
         return c;

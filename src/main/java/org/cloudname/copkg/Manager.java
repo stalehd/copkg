@@ -3,6 +3,7 @@ package org.cloudname.copkg;
 import org.cloudname.copkg.util.Unzip;
 import org.cloudname.copkg.util.Traverse;
 
+import com.ning.http.client.Realm.AuthScheme;
 import com.ning.http.client.Response;
 import com.ning.http.client.SimpleAsyncHttpClient;
 import com.ning.http.client.consumers.FileBodyConsumer;
@@ -93,7 +94,7 @@ public class Manager {
             };
 
         // Make client
-        SimpleAsyncHttpClient client = new SimpleAsyncHttpClient.Builder()
+        SimpleAsyncHttpClient.Builder builder = new SimpleAsyncHttpClient.Builder()
             .setRequestTimeoutInMs(REQUEST_TIMEOUT_MS)
             .setFollowRedirects(true)
             .setCompressionEnabled(true)
@@ -101,8 +102,16 @@ public class Manager {
             .setMaxRequestRetry(MAX_RETRY_ON_IOEXCEPTION)
             .setMaximumConnectionsPerHost(MAX_CONNECTIONS_PER_HOST)
             .setUrl(url)
-            .setListener(listener)
-            .build();
+            .setListener(listener);
+
+        // Set credentials
+        if (config.getUsername() != "") {
+            builder.setRealmPrincipal(config.getUsername())
+                .setRealmPassword(config.getPassword())
+                .setRealmScheme(AuthScheme.BASIC);
+        }
+
+        SimpleAsyncHttpClient client = builder.build();
 
         try {
             Response response = client.get(new FileBodyConsumer(new RandomAccessFile(destinationFile, "rw"))).get();
