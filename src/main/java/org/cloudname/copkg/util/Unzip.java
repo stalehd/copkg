@@ -1,12 +1,16 @@
 package org.cloudname.copkg.util;
 
+import org.apache.commons.compress.archivers.tar.TarArchiveEntry;
+import org.apache.commons.compress.archivers.tar.TarArchiveInputStream;
+import org.apache.commons.compress.archivers.zip.ZipArchiveEntry;
+import org.apache.commons.compress.archivers.zip.ZipArchiveOutputStream;
+import org.apache.commons.compress.archivers.zip.ZipFile;
+import org.apache.commons.compress.compressors.gzip.GzipCompressorInputStream;
+
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.Enumeration;
-import java.util.zip.ZipEntry;
-import java.util.zip.ZipException;
-import java.util.zip.ZipFile;
 
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -33,7 +37,7 @@ public class Unzip {
      * @param sourceFile the ZIP-file we wish to extract
      * @param targetDirectory the target directory into which we will extract the ZIP file
      */
-    public static void unzip(File sourceFile, File targetDirectory) throws ZipException, IOException {
+    public static void unzip(File sourceFile, File targetDirectory) throws IOException {
         if (! sourceFile.exists()) {
             throw new FileNotFoundException("Source file not found: " + sourceFile.getAbsolutePath());
         }
@@ -49,12 +53,10 @@ public class Unzip {
         // Invariants: sourceFile exists and target directory exists
 
         ZipFile zipFile = new ZipFile(sourceFile);
-        Enumeration<? extends ZipEntry> entries = zipFile.entries();
+        Enumeration<? extends ZipArchiveEntry> entries = zipFile.getEntries();
 
         while (entries.hasMoreElements()) {
-            ZipEntry zipEntry = entries.nextElement();
-
-            InputStream in = zipFile.getInputStream(zipEntry);
+            final ZipArchiveEntry zipEntry = entries.nextElement();
 
             // Prepare target name and make sure that we create any
             // directories that are needed.
@@ -74,6 +76,8 @@ public class Unzip {
                 continue;
             }
 
+            InputStream in = zipFile.getInputStream(zipEntry);
+
             // Copy the data
             OutputStream outs = new FileOutputStream(destinationFile);
             byte buffer[] = new byte[BUFFER_SIZE];
@@ -91,11 +95,18 @@ public class Unzip {
                             + " for " + destinationFile.getAbsolutePath());
             }
 
+            // Make sure executable files are executable
+            if ((zipEntry.getUnixMode() & 0100) != 0) {
+                destinationFile.setExecutable(true);
+                log.fine(" - Making executable " + destinationFile.getAbsolutePath());
+            }
+
             log.fine(" - Extracted " + destinationFile.getAbsolutePath() + " [" + totalBytes + "]");
 
             outs.flush();
             outs.close();
             in.close();
+            destinationFile.setLastModified(zipEntry.getTime());
         }
     }
 }
