@@ -1,13 +1,16 @@
 package org.cloudname.copkg;
 
 import org.cloudname.copkg.util.LogSetup;
+import org.cloudname.copkg.util.Argument;
+import org.cloudname.copkg.util.ArgumentParser;
 
-import org.cloudname.flags.Flag;
-import org.cloudname.flags.Flags;
+import joptsimple.OptionParser;
+import joptsimple.OptionSet;
+import joptsimple.OptionSpec;
 
 import java.io.File;
 import java.io.IOException;
-
+import java.util.List;
 import java.util.logging.Logger;
 
 /**
@@ -29,23 +32,18 @@ public class Main {
     public static final String COPKG_HOME_PACKAGE_DIR = "packages";
     public static final String COPKG_DEFAULT_PACKAGE_URL = "http://packages.skunk-works.no/copkg";
 
-    // Flags
-    @Flag(name = "repos", description = "Package Repository URL")
-    public static String optRepos = null;
+    // Command line options
+    private static OptionParser optionParser = new OptionParser();
 
-    @Flag(name = "dir", description = "Package install directory")
-    public static String optDir = null;
+    private static OptionSpec<String> repository =
+        optionParser.accepts("repository").withRequiredArg().ofType(String.class);
 
-    @Flag(name = "install", description = "Install package given by coordinate")
-    public static String optInstall = null;
+    private static OptionSpec<String> packageDir =
+        optionParser.accepts("package-dir").withRequiredArg().ofType(String.class);
 
-    @Flag(name = "uninstall", description = "Uninstall package given by coordinate")
-    public static String optUninstall = null;
+    private static OptionSpec<Void> help = optionParser.accepts("help").forHelp();
 
-    @Flag(name = "resolve", description = "Resolve coordinate into path and URL")
-    public static String optResolve = null;
-
-    private static Flags flags;
+    private static OptionSet optionSet;
 
     private Manager manager;
     private Configuration config;
@@ -62,13 +60,11 @@ public class Main {
      * Main entry point.
      */
     public static void main(String[] args) throws Exception {
-        // Parse flags
-        flags = new Flags()
-            .loadOpts(Main.class)
-            .parse(args);
+        optionSet = optionParser.parse(args);
 
-        if (flags.helpFlagged()) {
-            flags.printHelp(System.out);
+        // if --help then bail at once
+        if (optionSet.has(help)) {
+            printHelp();
             return;
         }
 
@@ -84,27 +80,92 @@ public class Main {
         m.dispatch();
     }
 
+
     /**
-     * Dispatch commands
+     * We could have used the built-in help display in jopt-simple,
+     * but this looks a bit clearer.
+     */
+    private static void printHelp() {
+        System.out.println(
+            "\n"
+            + "Commands:\n"
+            + "  copkg [flags] install <coordinate>   : install the package\n"
+            + "  copkg [flags] uninstall <coordinate> : uninstall the package\n"
+            + "  copkg [flags] resolve <coordinate>   : print paths and URLs for a given package coordinate\n"
+            + "\n"
+            + "Flags:\n"
+            + "    --package-dir=<dir>                : where to install packages\n"
+            + "    --repository=<dir>                 : where to fetch packages from\n"
+            + "\n"
+        );
+    }
+
+    /**
+     * Dispatch commands.
+     *
+     * <p>
+     * This method is a bit more convoluted than one would think was
+     * necessary.  However, this has to do with the fact that we are
+     * going to handle commands as well as command line options that
+     * are not parsed as command line options.  Fun, eh?
      */
     private void dispatch() throws Exception {
+        // Deal with the non-option arguments
+        List<Argument> arguments = ArgumentParser.parse(optionSet.nonOptionArguments().toArray(new String[] {}));
 
-        if (optInstall != null) {
-            install(optInstall);
+        // Make sure we at least have a command
+        if (arguments.size() == 0) {
+            printHelp();
             return;
         }
 
-        if (optUninstall != null) {
-            uninstall(optUninstall);
+        // The first non-option argument is a command
+        Argument command = arguments.remove(0);
+        assert("".equals(command.getPrefix()));
+        assert(command.getValue() == null);
+
+        if ("install".equals(command.getOption())) {
+            if (arguments.size() == 0) {
+                System.out.println("\ninstall error: expected coordinate as argument");
+                return;
+            }
+
+            Argument coordinateArgument = arguments.remove(0);
+            assert("".equals(coordinateArgument.getPrefix()));
+            assert(coordinateArgument.getValue() == null);
+            install(coordinateArgument.getOption());
             return;
         }
 
-        if (optResolve != null) {
-            resolve(optResolve);
+        if ("uninstall".equals(command.getOption())) {
+            if (arguments.size() == 0) {
+                System.out.println("\nuninstall error: expected coordinate as argument");
+                return;
+            }
+
+            Argument coordinateArgument = arguments.remove(0);
+            assert("".equals(coordinateArgument.getPrefix()));
+            assert(coordinateArgument.getValue() == null);
+            uninstall(coordinateArgument.getOption());
             return;
         }
 
-        flags.printHelp(System.out);
+        if ("resolve".equals(command.getOption())) {
+            if (arguments.size() == 0) {
+                System.out.println("\nresolve error: expected coordinate as argument");
+                return;
+            }
+
+            Argument coordinateArgument = arguments.remove(0);
+            assert("".equals(coordinateArgument.getPrefix()));
+            assert(coordinateArgument.getValue() == null);
+            resolve(coordinateArgument.getOption());
+            return;
+        }
+
+        System.out.println("\nUnknown command: " + command.getOption());
+
+        printHelp();
     }
 
 
@@ -136,9 +197,11 @@ public class Main {
      */
     private void resolve(String coordinateString) {
         PackageCoordinate coordinate = PackageCoordinate.parse(coordinateString);
-        System.out.println("installDir = " + config.getPackageDir() + File.separatorChar + coordinate.getPathFragment());
+        System.out.println("\n");
+        System.out.println("installDir       = " + config.getPackageDir() + File.separatorChar + coordinate.getPathFragment());
+        System.out.println("downloadUrl      = " + coordinate.toUrl(config.getPackageBaseUrl()));
         System.out.println("downloadFilename = " + config.downloadFilenameForCoordinate(coordinate));
-        System.out.println("downloadUrl = " + coordinate.toUrl(config.getPackageBaseUrl()));
+        System.out.println("\n");
     }
 
     /**
@@ -169,14 +232,13 @@ public class Main {
             c = Configuration.fromFile(home);
         }
 
-        if (optDir != null) {
-            c = new Configuration(optDir, c.getPackageBaseUrl());
+        if (optionSet.has(packageDir)) {
+            c = new Configuration(optionSet.valueOf(packageDir), c.getPackageBaseUrl());
         }
 
-        if (optRepos != null) {
-            c = new Configuration(c.getPackageDir(), optRepos);
+        if (optionSet.has(repository)) {
+            c = new Configuration(c.getPackageDir(), optionSet.valueOf(repository));
         }
-
 
         return c;
     }
