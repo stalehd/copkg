@@ -1,24 +1,20 @@
 # TODO
 
-## Commands
-
-List of commands that we want to implement in command line utility.
-
-- `list` - list installed packages
-
-## Download
 - Support for authentication (Basic-auth?  What does Maven use?)
+- Support for "list" command
+- Add MD5 checksum for all files in a package
+
+- Support for listing packages available from package repository
 - Support for multiple concurrent downloads
 - Support for resuming paused/interrupted download
 - Support for graceful cancelling of download
 - Support for multiple software repositories
-- Support for listing packages available from package repository
 
 ## Package integrity
-- Add MD5 checksum for all files in a package
+
 - Add verification step to the unpacking process
-  - verify checksums
-  - ensure required files are present
+- verify checksums
+- ensure required files are present
 
 ## Sanity checking
 - Have some form of sanity checking on Package Coordinates.  Mostly to
