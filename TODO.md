@@ -1,9 +1,22 @@
 # TODO
 
-- Support for authentication (Basic-auth?  What does Maven use?)
+## Next hacking session
+
+- Make Homebrew package
+- Make sample copkg complete with start.py, stop.py and status.py
+- Figure out how to version start.py/stop.py/status.py
+- Implement JobRunner
+- Implement daemon mode
+- Add Basic auth to daemon mode
+
+## Soon
+
+- Make Debian package
+
+## Rest
+
 - Support for "list" command
 - Add MD5 checksum for all files in a package
-
 - Support for listing packages available from package repository
 - Support for multiple concurrent downloads
 - Support for resuming paused/interrupted download
@@ -19,7 +32,6 @@
 ## Sanity checking
 - Have some form of sanity checking on Package Coordinates.  Mostly to
   make sure people do not come up with divergent schemes.
-
 
 ## Extra features
 - Support for bundles.  A bundle is a meta-package that represents several packages.  
