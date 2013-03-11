@@ -8,9 +8,7 @@ It does not, and will never, deal with dependencies.  copkg packages have to inc
 
 ### Installing the copkg utility
 
-Link to homepage at http://cloudname.org/copkg/
-
-- Brew install
+- Brew install: `brew install https://raw.github.com/borud/homebrew/master/copkg.rb`
 - Debian package
 
 ### Configuring copkg
@@ -19,7 +17,9 @@ You can put config in `~/.copkg/config.json` or `/etc/copkg/config.json`.  Here 
 
     {
       "packageDir" : "/Users/borud/packages",
-      "packageBaseUrl" : "http://localhost/~borud/copkg"
+      "packageBaseUrl" : "http://localhost/~borud/copkg",
+	  "username" : "the username",
+	  "password" : "the password"
     }
 
 
@@ -27,13 +27,19 @@ You can put config in `~/.copkg/config.json` or `/etc/copkg/config.json`.  Here 
 
 You can install a copkg by issuing the following command:
 
-    copkg --install <coordinate>
+    copkg install <coordinate>
     
 This will download and install the package if it is available.  It will not start the service in question.
 
 ### Removing copkg packages
 
-    copkg --uninstall <coordinate>
+    copkg uninstall <coordinate>
+
+### Resolving
+
+When you are playing around with copkg packages you sometimes need to figure out what URLs you end up downloading from, what directories you have configured etc.  The `resolve` command takes care of this:
+
+    copkg resolve <coordinate>
 
 ---
 
@@ -90,6 +96,9 @@ software.  Currently a valid `copkg` package requires two scripts:
 **copkg** packages are downloaded and unpacked into a *package directory*.  The *package directory* is a path somewhere on the filesystem into which packages are installed -- for instance `/usr/share/copkg`. 
 
 So when the package `example.org:myservice:1.2.3` is installed it would be installed under `/usr/share/copkg/org/example/myservice/1.2.3`.
+
+
+### Runtime directory 
 
 In order to run `myservice` in the above example we need a *runtime directory*.  This allows us to de-couple the runtime state of the service from the software artifact. It makes sense to name the runtime directory after something that identifies the service instance.
 
