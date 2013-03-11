@@ -49,4 +49,14 @@ public class JobTest {
         assertEquals("--9 --alpha-key=\"alpha value\" --beta-key=\"beta value\" --delta-key=\"\" --gamma-key=\"gamma value\"",
                      job.paramsAsOptions());
     }
+
+    @Test(expected = NullPointerException.class)
+    public void testConstructNull() throws Exception {
+        new Job(null, null, null);
+    }
+
+    @Test(expected = NullPointerException.class)
+    public void testParseNull() throws Exception {
+        Job.parse(null);
+    }
 }

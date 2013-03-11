@@ -1,5 +1,7 @@
 package org.cloudname.fire;
 
+import static com.google.common.base.Preconditions.checkNotNull;
+
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -26,12 +28,10 @@ import java.io.IOException;
  *
  * @author borud
  */
-public class Job {
-    public static final String NOARGS_MARKER = new String("###flagflagflag###");
-
-    private String serviceCoordinate;
-    private String packageCoordinate;
-    private Map<String,String> params;
+public final class Job {
+    private final String serviceCoordinate;
+    private final String packageCoordinate;
+    private final Map<String,String> params;
 
     /**
      * @param serviceCoordinate the service coordinate of the job
@@ -42,6 +42,9 @@ public class Job {
     public Job(@JsonProperty("serviceCoordinate") String serviceCoordinate,
                @JsonProperty("packageCoordinate") String packageCoordinate,
                @JsonProperty("params") Map<String, String> params) {
+        checkNotNull(serviceCoordinate);
+        checkNotNull(packageCoordinate);
+        checkNotNull(params);
         this.serviceCoordinate = serviceCoordinate;
         this.packageCoordinate = packageCoordinate;
         this.params = params;
@@ -64,6 +67,7 @@ public class Job {
      * @return a Job instance.
      */
     public static Job parse(String json) throws IOException {
+        checkNotNull(json);
         return new ObjectMapper().readValue(json, Job.class);
     }
 

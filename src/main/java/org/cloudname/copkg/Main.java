@@ -292,19 +292,31 @@ public class Main {
         // cascade/merge method instead.
 
         if (optionSet.has(packageDir)) {
-            c = new Configuration(optionSet.valueOf(packageDir), c.getPackageBaseUrl(), c.getUsername(), c.getPassword());
+            c = new Configuration(optionSet.valueOf(packageDir),
+                                  c.getPackageBaseUrl(),
+                                  c.getUsername(),
+                                  c.getPassword());
         }
 
         if (optionSet.has(repository)) {
-            c = new Configuration(c.getPackageDir(), optionSet.valueOf(repository), c.getUsername(), c.getPassword());
+            c = new Configuration(c.getPackageDir(),
+                                  optionSet.valueOf(repository),
+                                  c.getUsername(),
+                                  c.getPassword());
         }
 
         if (optionSet.has(username)) {
-            c = new Configuration(c.getPackageDir(), c.getPackageBaseUrl(), optionSet.valueOf(username), c.getPassword());
+            c = new Configuration(c.getPackageDir(),
+                                  c.getPackageBaseUrl(),
+                                  optionSet.valueOf(username),
+                                  c.getPassword());
         }
 
         if (optionSet.has(password)) {
-            c = new Configuration(c.getPackageDir(), c.getPackageBaseUrl(), c.getUsername(), optionSet.valueOf(password));
+            c = new Configuration(c.getPackageDir(),
+                                  c.getPackageBaseUrl(),
+                                  c.getUsername(),
+                                  optionSet.valueOf(password));
         }
 
         return c;

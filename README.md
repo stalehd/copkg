@@ -16,8 +16,8 @@ It does not, and will never, deal with dependencies.  copkg packages have to inc
 You can put config in `~/.copkg/config.json` or `/etc/copkg/config.json`.  Here is a sample configuration:
 
     {
-      "packageDir" : "/Users/borud/packages",
-      "packageBaseUrl" : "http://localhost/~borud/copkg",
+      "packageDir" : "/path/to/your/package/dir",
+      "packageBaseUrl" : "http://your.repository/",
 	  "username" : "the username",
 	  "password" : "the password"
     }
