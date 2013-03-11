@@ -8,23 +8,20 @@ import static com.google.common.base.Preconditions.checkNotNull;
  *
  * @author borud
  */
-public class Argument {
-    private String option;
-    private String value;
-    private String prefix;
+public final class Argument {
+    private final String option;
+    private final String value;
+    private final String prefix;
 
     /**
      * @param option prefixed by "-" or "--" or nothing.  Not allowed to be {@code null}
      * @param value the value of the argument. {@null} if the argument had no value.
      * @param prefix the prefix of the option, which can be "-", "--" or nothing (empty string).
      */
-    public Argument(String option, String value, String prefix) {
-        checkNotNull(option);
-        checkNotNull(prefix);
-
-        this.option = option;
+    public Argument(final String option, final String value, final String prefix) {
+        this.option = checkNotNull(option);
         this.value = value;
-        this.prefix = prefix;
+        this.prefix = checkNotNull(prefix);
     }
 
     public String getOption() {

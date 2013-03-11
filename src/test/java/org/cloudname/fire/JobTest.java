@@ -24,6 +24,9 @@ public class JobTest {
         put("9", null);
     }};
 
+    private static final String paramsAsOptionString =
+        "--9 --alpha-key=\"alpha value\" --beta-key=\"beta value\" --delta-key=\"\" --gamma-key=\"gamma value\"";
+
     /**
      * Just a very simple test that proves we can serialize and then
      * parse what we have just serialized.
@@ -46,8 +49,7 @@ public class JobTest {
     @Test
     public void testParams() throws Exception {
         Job job = new Job(serviceCoordinate, packageCoordinate, params);
-        assertEquals("--9 --alpha-key=\"alpha value\" --beta-key=\"beta value\" --delta-key=\"\" --gamma-key=\"gamma value\"",
-                     job.paramsAsOptions());
+        assertEquals(paramsAsOptionString, job.paramsAsOptions());
     }
 
     @Test(expected = NullPointerException.class)

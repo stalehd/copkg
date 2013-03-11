@@ -46,7 +46,7 @@ import java.util.regex.Matcher;
  *
  * @author borud
  */
-public class ArgumentParser {
+public final class ArgumentParser {
     private static Pattern argumentPattern = Pattern.compile("^(-{0,2})([a-zA-Z0-9][a-zA-Z0-9-]*)(=(.*))?");
 
     public static List<Argument> parse(String[] args) {
