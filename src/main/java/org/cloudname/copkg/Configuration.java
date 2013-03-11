@@ -143,11 +143,16 @@ public class Configuration {
         final Configuration other = (Configuration) o;
 
         return (packageDir.equals(other.packageDir)
-                && packageBaseUrl.equals(other.packageBaseUrl));
+                && packageBaseUrl.equals(other.packageBaseUrl)
+                && username.equals(other.username)
+                && password.equals(other.password));
     }
 
     @Override
     public int hashCode() {
-        return (packageDir.hashCode() * 23) ^  (packageBaseUrl.hashCode() * 37);
+        return (packageDir.hashCode() * 23)
+            ^  (packageBaseUrl.hashCode() * 37)
+            ^  (username.hashCode() * 47)
+            ^  (password.hashCode() * 59);
     }
 }
