@@ -41,7 +41,7 @@ public final class Argument {
      *   ie. not a command line option prefixed by a "-" or a "--".
      */
     public boolean isWord() {
-        return "".equals(prefix);
+        return prefix.isEmpty();
     }
 
     @Override
