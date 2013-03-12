@@ -1,5 +1,7 @@
 package org.cloudname.fire;
 
+import com.google.common.testing.EqualsTester;
+
 import java.util.Map;
 import java.util.HashMap;
 
@@ -24,8 +26,13 @@ public class JobTest {
         put("9", null);
     }};
 
-    private static final String paramsAsOptionString =
-        "--9 --alpha-key=\"alpha value\" --beta-key=\"beta value\" --delta-key=\"\" --gamma-key=\"gamma value\"";
+    private static final String[] PARAMS_AS_OPTION_ARRAY = {
+        "--9",
+        "--alpha-key=alpha value",
+        "--beta-key=beta value",
+        "--delta-key=",
+        "--gamma-key=gamma value"
+    };
 
     /**
      * Just a very simple test that proves we can serialize and then
@@ -42,14 +49,10 @@ public class JobTest {
         assertEquals(job.toJson(), job2.toJson());
     }
 
-    /**
-     * Make sure the keys are in the predicted order and everything is
-     * formatted as expected.
-     */
     @Test
-    public void testParams() throws Exception {
+    public void testParamArray() throws Exception {
         Job job = new Job(serviceCoordinate, packageCoordinate, params);
-        assertEquals(paramsAsOptionString, job.paramsAsOptions());
+        assertEquals(PARAMS_AS_OPTION_ARRAY, job.getOptionArray());
     }
 
     @Test(expected = NullPointerException.class)
@@ -60,5 +63,15 @@ public class JobTest {
     @Test(expected = NullPointerException.class)
     public void testParseNull() throws Exception {
         Job.parse(null);
+    }
+
+    @Test
+    public void testEquals() throws Exception {
+        new EqualsTester()
+            .addEqualityGroup(new Job("1.test.user.dc", "group:artifact:1.2.3", params),
+                              new Job("1.test.user.dc", "group:artifact:1.2.3", params))
+            .testEquals();
+
+
     }
 }
