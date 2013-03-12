@@ -21,6 +21,8 @@ public class Configuration {
     private String packageDir;
     private String downloadDir;
     private String packageBaseUrl;
+    private String username;
+    private String password;
 
     /**
      * Constructor for package manager configuration.
@@ -32,10 +34,14 @@ public class Configuration {
      */
     @JsonCreator
     public Configuration(@JsonProperty("packageDir") String packageDir,
-                         @JsonProperty("packageBaseUrl") String packageBaseUrl)
+                         @JsonProperty("packageBaseUrl") String packageBaseUrl,
+                         @JsonProperty("username") String username,
+                         @JsonProperty("password") String password)
     {
         this.packageDir = packageDir;
         this.packageBaseUrl = packageBaseUrl;
+        this.username = username;
+        this.password = password;
 
         // Populate this but don't touch filesystem
         downloadDir = packageDir + (packageDir.endsWith("/") ? "" : "/") + DOWNLOAD_DIR;
@@ -54,6 +60,21 @@ public class Configuration {
      */
     public String getPackageDir() {
         return packageDir;
+    }
+
+
+    /**
+     * @return the username for use with the packageBaseUrl
+     */
+    public String getUsername() {
+        return username;
+    }
+
+    /**
+     * @return the password for use with the packageBaseUrl
+     */
+    public String getPassword() {
+        return password;
     }
 
     /**
@@ -122,11 +143,16 @@ public class Configuration {
         final Configuration other = (Configuration) o;
 
         return (packageDir.equals(other.packageDir)
-                && packageBaseUrl.equals(other.packageBaseUrl));
+                && packageBaseUrl.equals(other.packageBaseUrl)
+                && username.equals(other.username)
+                && password.equals(other.password));
     }
 
     @Override
     public int hashCode() {
-        return (packageDir.hashCode() * 23) ^  (packageBaseUrl.hashCode() * 37);
+        return (packageDir.hashCode() * 23)
+            ^  (packageBaseUrl.hashCode() * 37)
+            ^  (username.hashCode() * 47)
+            ^  (password.hashCode() * 59);
     }
 }

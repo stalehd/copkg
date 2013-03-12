@@ -3,9 +3,12 @@ package org.cloudname.copkg;
 import org.cloudname.copkg.util.Unzip;
 import org.cloudname.copkg.util.Traverse;
 
+import com.ning.http.client.Realm.AuthScheme;
 import com.ning.http.client.Response;
 import com.ning.http.client.SimpleAsyncHttpClient;
 import com.ning.http.client.consumers.FileBodyConsumer;
+import com.ning.http.client.simple.HeaderMap;
+import com.ning.http.client.simple.SimpleAHCTransferListener;
 
 import java.io.File;
 import java.io.IOException;
@@ -71,15 +74,44 @@ public class Manager {
         log.fine("destination dir  = " + destinationDir.getAbsolutePath());
         log.fine("destination file = " + destinationFile.getAbsolutePath());
 
+        SimpleAHCTransferListener listener = new SimpleAHCTransferListener() {
+                private long last = System.currentTimeMillis();
+
+                @Override public void onBytesReceived(String url, long amount, long current, long total) {
+                    // Only output progress once every 1000 milliseconds
+                    long now = System.currentTimeMillis();
+                    if ((now - last) > 1000) {
+                        last = now;
+                        long percent = (amount * 100) / total;
+                        log.info(" - Received " + amount + " of " + total + " bytes (" + percent + "%)");
+                    }
+                }
+
+                @Override public void onBytesSent(String url, long amount, long current, long total) {}
+                @Override public void onCompleted(String url, int statusCode, String statusText) {}
+                @Override public void onHeaders(String url, HeaderMap headers) {}
+                @Override public void onStatus(String url, int statusCode, String statusText) {}
+            };
+
         // Make client
-        SimpleAsyncHttpClient client = new SimpleAsyncHttpClient.Builder()
+        SimpleAsyncHttpClient.Builder builder = new SimpleAsyncHttpClient.Builder()
             .setRequestTimeoutInMs(REQUEST_TIMEOUT_MS)
             .setFollowRedirects(true)
+            .setCompressionEnabled(true)
             .setMaximumNumberOfRedirects(MAX_NUM_REDIRECTS)
             .setMaxRequestRetry(MAX_RETRY_ON_IOEXCEPTION)
             .setMaximumConnectionsPerHost(MAX_CONNECTIONS_PER_HOST)
             .setUrl(url)
-            .build();
+            .setListener(listener);
+
+        // Set credentials
+        if (config.getUsername() != "") {
+            builder.setRealmPrincipal(config.getUsername())
+                .setRealmPassword(config.getPassword())
+                .setRealmScheme(AuthScheme.BASIC);
+        }
+
+        SimpleAsyncHttpClient client = builder.build();
 
         try {
             Response response = client.get(new FileBodyConsumer(new RandomAccessFile(destinationFile, "rw"))).get();
@@ -100,6 +132,11 @@ public class Manager {
 
     /**
      * Install a package given by coordinate.
+     *
+     * TODO(borud): change strategy somewhat with regard to
+     *   unpack-dir.  Give it a randomized name and check for
+     *   collision.  The current method is better than simply
+     *   unpacking but it isn't entirely bullet-proof.
      *
      * @param coordinate the coordinate of the package we wish to
      *   install.
@@ -133,14 +170,16 @@ public class Manager {
 
         // Create a directory for unpacking.
         //
-        // TODO(borud): this is where we want to add some form of
-        // dotlocking later to make it possible to run concurrent
+        // TODO(borud): this is where we *might* want to add some form
+        // of dotlocking later to make it possible to run concurrent
         // installs from different processes as long as they operate
         // on different packages.  This is preferable to having a
         // master lock.
         File unpackDir = new File(targetDir.getAbsolutePath()
                                   + "---"
                                   + UNPACK_DIR_SUFFIX);
+
+        log.fine("Unpacking " + downloadFile + " into " + unpackDir);
         unpackDir.mkdirs();
 
         // Now unzip the file into the unpack dir
@@ -202,7 +241,7 @@ public class Manager {
                     log.warning("Failed to delete " + f.getAbsolutePath());
                     return;
                 }
-                log.info("Deleted " + f.getAbsolutePath());
+                log.fine("Deleted " + f.getAbsolutePath());
             }
         }.traverse(removeDir);
 
