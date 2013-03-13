@@ -1,5 +1,9 @@
 package org.cloudname.copkg;
 
+import org.cloudname.fire.Job;
+import org.cloudname.fire.JobRunner;
+import org.cloudname.fire.Result;
+
 import org.cloudname.copkg.util.LogSetup;
 import org.cloudname.copkg.util.Argument;
 import org.cloudname.copkg.util.ArgumentParser;
@@ -11,6 +15,8 @@ import joptsimple.OptionSpec;
 import java.io.File;
 import java.io.IOException;
 import java.util.List;
+import java.util.Map;
+import java.util.HashMap;
 import java.util.logging.Logger;
 
 /**
@@ -192,8 +198,39 @@ public class Main {
 
         // TODO(borud): implement.
         if ("start".equals(command.getOption())) {
-            System.out.println("\nNot implemented yet: " + command.getOption());
-            printHelp();
+            if (arguments.size() < 2) {
+                System.out.println("\nstart: expected package coordinate and service coordinate");
+                return;
+            }
+
+            Argument packageCoordinate = arguments.remove(0);
+            assert("".equals(packageCoordinate.getPrefix()));
+            assert(packageCoordinate.getValue() == null);
+
+            Argument serviceCoordinate = arguments.remove(0);
+            assert("".equals(serviceCoordinate.getPrefix()));
+            assert(serviceCoordinate.getValue() == null);
+
+            final Map<String,String> params = new HashMap<String,String>();
+            for (Argument arg : arguments) {
+                // The rest of the arguments here should be real arguments
+                // that are prefixed by "--".  If they are not we kick up
+                // a fuss.  It is better to try to force consistency now
+                // than to try to reverse bad practices later.
+                if (! "--".equals(arg.getPrefix())) {
+                    throw new IllegalArgumentException("Argument did not start with '--', please be consistent");
+                }
+
+                params.put(arg.getOption(), arg.getValue());
+            }
+
+            final Job job = new Job(packageCoordinate.getOption(),
+                                    serviceCoordinate.getOption(),
+                                    params);
+
+            // Run the job!
+            final Result result = new JobRunner(config).runJob(job);
+            System.out.println(result.toString());
             return;
         }
 

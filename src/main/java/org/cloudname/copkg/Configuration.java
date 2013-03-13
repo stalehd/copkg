@@ -1,5 +1,7 @@
 package org.cloudname.copkg;
 
+import com.google.common.base.Objects;
+
 import java.io.File;
 import java.io.IOException;
 
@@ -101,6 +103,13 @@ public class Configuration {
     }
 
     /**
+     * Given a coordinate: calculate the directory
+     */
+    public String packageDirectoryForCoordinate(PackageCoordinate coordinate) {
+        return  packageDir + File.separatorChar + coordinate.getPathFragment();
+    }
+
+    /**
      * Convert configuration to JSON.
      *
      * @return JSON representation of the configuration.
@@ -141,18 +150,14 @@ public class Configuration {
         }
 
         final Configuration other = (Configuration) o;
-
-        return (packageDir.equals(other.packageDir)
-                && packageBaseUrl.equals(other.packageBaseUrl)
-                && username.equals(other.username)
-                && password.equals(other.password));
+        return Objects.equal(packageDir, other.packageDir)
+            && Objects.equal(packageBaseUrl, other.packageBaseUrl)
+            && Objects.equal(username, other.username)
+            && Objects.equal(password, other.password);
     }
 
     @Override
     public int hashCode() {
-        return (packageDir.hashCode() * 23)
-            ^  (packageBaseUrl.hashCode() * 37)
-            ^  (username.hashCode() * 47)
-            ^  (password.hashCode() * 59);
+        return Objects.hashCode(packageDir, packageBaseUrl, username, password);
     }
 }

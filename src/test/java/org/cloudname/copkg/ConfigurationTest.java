@@ -1,12 +1,10 @@
 package org.cloudname.copkg;
 
+import com.google.common.testing.EqualsTester;
+
 import java.io.File;
 
-import org.junit.AfterClass;
-import org.junit.BeforeClass;
 import org.junit.Test;
-import org.junit.ClassRule;
-import org.junit.rules.TemporaryFolder;
 import static org.junit.Assert.*;
 
 /**
@@ -54,6 +52,12 @@ public class ConfigurationTest {
         assertEquals(expected, config.downloadFilenameForCoordinate(coordinate));
     }
 
+    @Test
+    public void testPackageDirectoryForCoordinate() throws Exception {
+        final String expected = packageDir + File.separatorChar + coordinate.getPathFragment();
+        assertEquals(expected, config.packageDirectoryForCoordinate(coordinate));
+    }
+
     /**
      * Ensure that mapping to/from JSON works.
      */
@@ -72,5 +76,15 @@ public class ConfigurationTest {
         assertEquals(config.getPackageBaseUrl(), parsedConfig.getPackageBaseUrl());
 
         // TODO(borud): add missing unit test for fromFile() method.
+    }
+
+    @Test
+    public void testEquals() throws Exception {
+        // I'm not sure of the quality of this test.  It should have a
+        // negative as well.
+        new EqualsTester()
+            .addEqualityGroup(new Configuration(packageDir, baseUrl, username, password),
+                              new Configuration(packageDir, baseUrl, username, password))
+            .testEquals();
     }
 }

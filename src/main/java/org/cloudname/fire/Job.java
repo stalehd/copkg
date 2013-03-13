@@ -3,6 +3,8 @@ package org.cloudname.fire;
 import static com.google.common.base.Preconditions.checkNotNull;
 import com.google.common.base.Objects;
 
+import org.cloudname.copkg.PackageCoordinate;
+
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -30,6 +32,9 @@ import java.io.IOException;
  * @author borud
  */
 public final class Job {
+    // These are strings because this class is JSON serializable and
+    // we need to do a bit of work before we can replace these with
+    // the proper types.
     private final String serviceCoordinate;
     private final String packageCoordinate;
     private final Map<String,String> params;
@@ -128,6 +133,6 @@ public final class Job {
 
     @Override
     public String toString() {
-        return toJson();
+        return Job.class.getName() + " " + toJson();
     }
 }

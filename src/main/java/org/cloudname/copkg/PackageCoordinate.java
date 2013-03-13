@@ -121,6 +121,10 @@ public class PackageCoordinate {
     public static PackageCoordinate parse(String coordinate) {
         String[] parts = coordinate.split(":", 3);
 
+        if (parts.length != 3) {
+            throw new IllegalArgumentException("Malformed package coordinate: " + coordinate);
+        }
+
         // We make no attempt to validate the coordinate -- we leave
         // that to the constructor.
         return new PackageCoordinate(parts[0],parts[1],parts[2]);
