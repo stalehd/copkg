@@ -1,11 +1,16 @@
 package org.cloudname.fire;
 
 import static com.google.common.base.Preconditions.checkNotNull;
+import com.google.common.base.Objects;
+
+import org.cloudname.copkg.PackageCoordinate;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.databind.SerializationFeature;
+
 
 import java.util.Map;
 import java.util.TreeSet;
@@ -24,11 +29,12 @@ import java.io.IOException;
  * To indicate that a parameter that takes no value is present a key
  * pointing to {@code null} is added to the map.
  *
- * TODO(borud): implement hashCode() and equals() if needed.
- *
  * @author borud
  */
 public final class Job {
+    // These are strings because this class is JSON serializable and
+    // we need to do a bit of work before we can replace these with
+    // the proper types.
     private final String serviceCoordinate;
     private final String packageCoordinate;
     private final Map<String,String> params;
@@ -85,36 +91,48 @@ public final class Job {
     }
 
     /**
-     * Get the parameters formatted as command line options.  In order
-     * to get the parameters predictably, the parameters will be
-     * sorted in lexical order.
+     * Get the parameters formatted as a command line options array.
+     * The parameters will always appear in lexical order for
+     * predictability.
      *
-     * @return the parameters formatted as command line options.
+     * <i>If you find yourself tempted to just join this array by
+     * spaces beware that it isn't quite that simple.  You will have
+     * to re-add the quotation marks around arguments that contain
+     * whitespace.</i>
+     *
+     * @return the parameters formatted as a command line option
+     *   array.
      */
-    public String paramsAsOptions() {
-        StringBuilder buff = new StringBuilder();
-        boolean first = true;
-
+    @JsonIgnore // derived property
+    public String[] getOptionArray() {
+        String[] optionArray = new String[params.size()];
+        int index = 0;
         for (String key : new TreeSet<String>(params.keySet())) {
             String value = params.get(key);
-            buff.append((first?"--":" --"))
-                .append(key);
-
-            // A null value means that the flag was present but had no
-            // options.
-            if (value != null) {
-                buff.append("=\"")
-                    .append(value)
-                    .append("\"");
-            }
-
-            first = false;
+            optionArray[index++] = "--" + key + ((value == null) ? "" : ("=" + value));
         }
-        return buff.toString();
+        return optionArray;
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hashCode(serviceCoordinate, packageCoordinate, params);
+    }
+
+    @Override
+    public boolean equals(final Object obj){
+        if(! (obj instanceof Job)) {
+            return false;
+        }
+
+        final Job other = (Job) obj;
+        return Objects.equal(packageCoordinate, other.packageCoordinate)
+            && Objects.equal(serviceCoordinate, other.serviceCoordinate)
+            && Objects.equal(params, other.params);
     }
 
     @Override
     public String toString() {
-        return toJson();
+        return Job.class.getName() + " " + toJson();
     }
 }

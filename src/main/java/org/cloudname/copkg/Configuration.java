@@ -1,5 +1,8 @@
 package org.cloudname.copkg;
 
+import static com.google.common.base.Preconditions.checkNotNull;
+import com.google.common.base.Objects;
+
 import java.io.File;
 import java.io.IOException;
 
@@ -38,10 +41,10 @@ public class Configuration {
                          @JsonProperty("username") String username,
                          @JsonProperty("password") String password)
     {
-        this.packageDir = packageDir;
-        this.packageBaseUrl = packageBaseUrl;
-        this.username = username;
-        this.password = password;
+        this.packageDir = checkNotNull(packageDir);
+        this.packageBaseUrl = checkNotNull(packageBaseUrl);
+        this.username = checkNotNull(username);
+        this.password = checkNotNull(password);
 
         // Populate this but don't touch filesystem
         downloadDir = packageDir + (packageDir.endsWith("/") ? "" : "/") + DOWNLOAD_DIR;
@@ -101,6 +104,13 @@ public class Configuration {
     }
 
     /**
+     * Given a coordinate: calculate the directory
+     */
+    public String packageDirectoryForCoordinate(PackageCoordinate coordinate) {
+        return  packageDir + File.separatorChar + coordinate.getPathFragment();
+    }
+
+    /**
      * Convert configuration to JSON.
      *
      * @return JSON representation of the configuration.
@@ -141,18 +151,14 @@ public class Configuration {
         }
 
         final Configuration other = (Configuration) o;
-
-        return (packageDir.equals(other.packageDir)
-                && packageBaseUrl.equals(other.packageBaseUrl)
-                && username.equals(other.username)
-                && password.equals(other.password));
+        return Objects.equal(packageDir, other.packageDir)
+            && Objects.equal(packageBaseUrl, other.packageBaseUrl)
+            && Objects.equal(username, other.username)
+            && Objects.equal(password, other.password);
     }
 
     @Override
     public int hashCode() {
-        return (packageDir.hashCode() * 23)
-            ^  (packageBaseUrl.hashCode() * 37)
-            ^  (username.hashCode() * 47)
-            ^  (password.hashCode() * 59);
+        return Objects.hashCode(packageDir, packageBaseUrl, username, password);
     }
 }

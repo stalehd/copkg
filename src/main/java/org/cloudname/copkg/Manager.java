@@ -143,9 +143,7 @@ public class Manager {
      * @throws Exception fails on any and all exceptions.
      */
     public void install(PackageCoordinate coordinate) throws Exception {
-        File targetDir = new File(config.getPackageDir()
-                                  + File.separatorChar
-                                  + coordinate.getPathFragment());
+        File targetDir = new File(config.packageDirectoryForCoordinate(coordinate));
 
         // If the target directory exists, we assume the package is
         // installed and bail early
