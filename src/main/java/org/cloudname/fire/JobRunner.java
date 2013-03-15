@@ -1,5 +1,7 @@
 package org.cloudname.fire;
 
+import static com.google.common.base.Preconditions.checkNotNull;
+
 import org.cloudname.copkg.Configuration;
 import org.cloudname.copkg.PackageCoordinate;
 
@@ -7,6 +9,9 @@ import java.io.File;
 import java.util.logging.Logger;
 
 /**
+ * This class takes care of running a single job which should
+ * terminate within a reasonable amount of time.  It is not designed
+ * to support long-running jobs.
  *
  * @author borud
  */
@@ -15,6 +20,7 @@ public final class JobRunner {
 
     public static final String SCRIPT_DIR = "script.d";
     public static final String START_SCRIPT = "start.py";
+    public static final String STATUS_SCRIPT = "status.py";
 
     private final Configuration config;
 
@@ -22,7 +28,7 @@ public final class JobRunner {
      * @param config the copkg configuration.
      */
     public JobRunner(final Configuration config) {
-        this.config = config;
+        this.config = checkNotNull(config);
     }
 
     /**
@@ -57,6 +63,7 @@ public final class JobRunner {
      *   {@code null} if it was not found.
      */
     public File startScriptForJob(final Job job) {
+        checkNotNull(job);
         // There is a good chance you came to this method because you
         // wanted to add support for more script types.  And now you
         // are happy because you realized that I made this easy for

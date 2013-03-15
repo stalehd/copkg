@@ -1,5 +1,6 @@
 package org.cloudname.copkg;
 
+import static com.google.common.base.Preconditions.checkNotNull;
 import com.google.common.base.Objects;
 
 import java.io.File;
@@ -40,10 +41,10 @@ public class Configuration {
                          @JsonProperty("username") String username,
                          @JsonProperty("password") String password)
     {
-        this.packageDir = packageDir;
-        this.packageBaseUrl = packageBaseUrl;
-        this.username = username;
-        this.password = password;
+        this.packageDir = checkNotNull(packageDir);
+        this.packageBaseUrl = checkNotNull(packageBaseUrl);
+        this.username = checkNotNull(username);
+        this.password = checkNotNull(password);
 
         // Populate this but don't touch filesystem
         downloadDir = packageDir + (packageDir.endsWith("/") ? "" : "/") + DOWNLOAD_DIR;

@@ -4,11 +4,11 @@ import static com.google.common.base.Preconditions.checkNotNull;
 import com.google.common.base.Objects;
 
 /**
- * Class that represents the result of running a Job.
+ * Class that represents the result of a Job.
  *
  * @author borud
  */
-public class Result {
+public final class Result {
     private final String stdout;
     private final String stderr;
     private final Status status;
@@ -16,8 +16,10 @@ public class Result {
     private final int exitValue;
 
     public enum Status {
+        SUCCESS,
         SCRIPT_NOT_FOUND,
         SCRIPT_NOT_EXECUTABLE,
+        RETURN_VALUE_NON_NULL,
         OTHER,
     }
 
@@ -26,6 +28,8 @@ public class Result {
      *
      * @param stdout the output on stdout from the process
      * @param stderr the output on stderr from the process
+     * @param status enum that indicates status
+     * @param message human readable message to indicate what went wrong (UI usable)
      * @return exitValue the exit value of the process
      */
     public Result(final String stdout,
@@ -35,7 +39,7 @@ public class Result {
                   final int exitValue) {
         this.stdout = checkNotNull(stdout);
         this.stderr = checkNotNull(stderr);
-        this.status = status;
+        this.status = checkNotNull(status);
         this.message = checkNotNull(message);
         this.exitValue = exitValue;
     }
@@ -49,7 +53,7 @@ public class Result {
      *   "neutral" values.
      */
     public static Result makeError(final Status status, final String message) {
-        return new Result("", "", status, message, 0);
+        return new Result("", "", checkNotNull(status), checkNotNull(message), 0);
     }
 
     @Override
