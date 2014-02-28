@@ -3,8 +3,6 @@ package org.cloudname.fire;
 import static com.google.common.base.Preconditions.checkNotNull;
 import com.google.common.base.Objects;
 
-import org.cloudname.copkg.PackageCoordinate;
-
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -14,7 +12,6 @@ import com.fasterxml.jackson.databind.SerializationFeature;
 
 import java.util.Map;
 import java.util.TreeSet;
-import java.util.Collections;
 import java.io.IOException;
 
 /**
@@ -35,29 +32,29 @@ public final class Job {
     // These are strings because this class is JSON serializable and
     // we need to do a bit of work before we can replace these with
     // the proper types.
-    private final String serviceCoordinate;
+    private final String runtimeDirectory;
     private final String packageCoordinate;
     private final Map<String,String> params;
 
     /**
-     * @param serviceCoordinate the service coordinate of the job
+     * @param runtimeDirectory the service coordinate of the job
      * @param packageCoordinate the package coordinate of the job
-     * @param map holding key-value pairs that represent the parameters of the job
+     * @param params holding key-value pairs that represent the parameters of the job
      */
     @JsonCreator
-    public Job(@JsonProperty("serviceCoordinate") String serviceCoordinate,
+    public Job(@JsonProperty("runtimeDirectory") String runtimeDirectory,
                @JsonProperty("packageCoordinate") String packageCoordinate,
                @JsonProperty("params") Map<String, String> params) {
-        checkNotNull(serviceCoordinate);
+        checkNotNull(runtimeDirectory);
         checkNotNull(packageCoordinate);
         checkNotNull(params);
-        this.serviceCoordinate = serviceCoordinate;
+        this.runtimeDirectory = runtimeDirectory;
         this.packageCoordinate = packageCoordinate;
         this.params = params;
     }
 
-    public String getServiceCoordinate() {
-        return serviceCoordinate;
+    public String getRuntimeDirectory() {
+        return runtimeDirectory;
     }
 
     public String getPackageCoordinate() {
@@ -116,7 +113,7 @@ public final class Job {
 
     @Override
     public int hashCode() {
-        return Objects.hashCode(serviceCoordinate, packageCoordinate, params);
+        return Objects.hashCode(runtimeDirectory, packageCoordinate, params);
     }
 
     @Override
@@ -127,7 +124,7 @@ public final class Job {
 
         final Job other = (Job) obj;
         return Objects.equal(packageCoordinate, other.packageCoordinate)
-            && Objects.equal(serviceCoordinate, other.serviceCoordinate)
+            && Objects.equal(runtimeDirectory, other.runtimeDirectory)
             && Objects.equal(params, other.params);
     }
 

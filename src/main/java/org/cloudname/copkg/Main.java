@@ -53,6 +53,9 @@ public class Main {
     private static OptionSpec<String> password =
         optionParser.accepts("password").withRequiredArg().ofType(String.class);
 
+    private static OptionSpec<String> runtimeDir =
+        optionParser.accepts("runtime-dir").withRequiredArg().ofType(String.class);
+
     private static OptionSpec<Void> help = optionParser.accepts("help").forHelp();
 
     private static OptionSet optionSet;
@@ -198,8 +201,8 @@ public class Main {
 
         // TODO(borud): implement.
         if ("start".equals(command.getOption())) {
-            if (arguments.size() < 2) {
-                System.out.println("\nstart: expected package coordinate and service coordinate");
+            if (arguments.size() < 1) {
+                System.out.println("\nstart: expected package coordinate");
                 return;
             }
 
@@ -207,9 +210,19 @@ public class Main {
             assert("".equals(packageCoordinate.getPrefix()));
             assert(packageCoordinate.getValue() == null);
 
-            Argument serviceCoordinate = arguments.remove(0);
-            assert("".equals(serviceCoordinate.getPrefix()));
-            assert(serviceCoordinate.getValue() == null);
+            if (!optionSet.has(runtimeDir)) {
+                System.out.println("\nstart: Missing runtime directory parameter");
+                return;
+            }
+
+            final File rtDir = new File(optionSet.valueOf(runtimeDir));
+            if (!rtDir.isDirectory()) {
+                // Create the runtime directory if it doesn't exist
+                if (!rtDir.mkdir()) {
+                    System.out.println("\nCould not create runtime diretory " + rtDir.getAbsolutePath() + ".");
+                    return;
+                }
+            }
 
             final Map<String,String> params = new HashMap<String,String>();
             for (Argument arg : arguments) {
@@ -224,9 +237,10 @@ public class Main {
                 params.put(arg.getOption(), arg.getValue());
             }
 
-            final Job job = new Job(packageCoordinate.getOption(),
-                                    serviceCoordinate.getOption(),
-                                    params);
+            final Job job = new Job(
+                    rtDir.getAbsolutePath(),
+                    packageCoordinate.getOption(),
+                    params);
 
             // Run the job!
             final Result result = new JobRunner(config).runJob(job);

@@ -6,6 +6,16 @@ import org.cloudname.copkg.Configuration;
 import org.cloudname.copkg.PackageCoordinate;
 
 import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.io.LineNumberReader;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.logging.Logger;
 
 /**
@@ -31,6 +41,24 @@ public final class JobRunner {
         this.config = checkNotNull(config);
     }
 
+    private Runnable createStreamReader(final InputStream inputStream, final List<String> output) {
+        return new Runnable() {
+            @Override
+            public void run() {
+                try {
+                    final LineNumberReader reader= new LineNumberReader(new InputStreamReader(inputStream));
+                    String line = reader.readLine();
+                    while (line != null) {
+                        output.add(line);
+                        line = reader.readLine();
+                    }
+                    reader.close();
+                } catch (IOException ioe) {
+                    output.add(ioe.getMessage());
+                }
+            }
+        };
+    }
     /**
      * Run a Job.  The job is expected to just start the service and
      * then terminate.  If this job hangs for an unacceptably long
@@ -53,7 +81,84 @@ public final class JobRunner {
                                     "Script is not executable: " + startScript.getAbsolutePath());
         }
 
-        return null;
+        // Launch job. The first entry is the script name, the 2nd and 3rd element
+        // is the working directory parameter
+        final List<String> command = new ArrayList<>();
+        command.add(startScript.getAbsolutePath());
+        command.add("--working-directory");
+        command.add(job.getRuntimeDirectory());
+
+        // Add the rest of the parameters
+        for (final Map.Entry<String, String> param : job.getParams().entrySet()) {
+            command.add(param.getKey());
+            command.add(param.getValue());
+        }
+
+        // Finally, launch the startup script and capture all stdout and stderr
+        // data in separate threads.
+        try {
+            final List<String> stderr = new ArrayList<>();
+            final List<String> stdout = new ArrayList<>();
+            final Process process = Runtime.getRuntime().exec(command.toArray(new String[command.size()]));
+
+            final ExecutorService outputReader = Executors.newFixedThreadPool(3);
+            outputReader.execute(createStreamReader(process.getInputStream(), stdout));
+            outputReader.execute(createStreamReader(process.getErrorStream(), stderr));
+            final AtomicBoolean killedProcess = new AtomicBoolean(false);
+            // Create a thread to kill off the process if it won't start within 180 seconds
+            outputReader.execute(new Runnable() {
+                @Override
+                public void run() {
+                    try {
+                        Thread.sleep(180000L);
+                    } catch (InterruptedException ie) {
+                        // Just ignore it; nothing to do.
+                        return;
+                    }
+                    // Check if the process has completed
+                    try {
+                        process.exitValue();
+                    } catch (IllegalThreadStateException ise) {
+                        System.out.println("Won't wait for the process any longer, killing it.");
+                        process.destroy();
+                        killedProcess.set(true);
+                    }
+                }
+            });
+            try {
+                process.waitFor();
+            } catch (InterruptedException ie) {
+                return Result.makeError(
+                        Result.Status.OTHER,
+                        "Got exception when waiting for the process to end: " + ie.getMessage());
+            }
+            outputReader.shutdownNow();
+
+            if (killedProcess.get()) {
+                return Result.makeError(Result.Status.OTHER, "Process timed out.");
+            }
+            // Return regardless of the exit value; if the exit value is other than 1 it'll
+            // say so on the command line.
+            return new Result(
+                    joinLines(stdout),
+                    joinLines(stderr),
+                    Result.Status.SUCCESS,
+                    "Script executed",
+                    process.exitValue());
+
+        } catch (IOException ioe) {
+            return Result.makeError(
+                    Result.Status.OTHER,
+                    "Got exception running the process: " + ioe.getMessage());
+        }
+    }
+
+    private String joinLines(final List<String> lines) {
+        final StringBuilder sb = new StringBuilder();
+        for (final String str : lines) {
+            sb.append(str).append("\n");
+        }
+        return sb.toString();
     }
 
     /**

@@ -19,7 +19,6 @@ public final class Result {
         SUCCESS,
         SCRIPT_NOT_FOUND,
         SCRIPT_NOT_EXECUTABLE,
-        RETURN_VALUE_NON_NULL,
         OTHER,
     }
 
