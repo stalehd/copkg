@@ -3,8 +3,6 @@ package org.cloudname.fire;
 import static com.google.common.base.Preconditions.checkNotNull;
 import com.google.common.base.Objects;
 
-import org.cloudname.copkg.PackageCoordinate;
-
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -12,9 +10,7 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.databind.SerializationFeature;
 
 
-import java.util.Map;
-import java.util.TreeSet;
-import java.util.Collections;
+import java.util.List;
 import java.io.IOException;
 
 /**
@@ -35,36 +31,36 @@ public final class Job {
     // These are strings because this class is JSON serializable and
     // we need to do a bit of work before we can replace these with
     // the proper types.
-    private final String serviceCoordinate;
+    private final String runtimeDirectory;
     private final String packageCoordinate;
-    private final Map<String,String> params;
+    private final List<String> params;
 
     /**
-     * @param serviceCoordinate the service coordinate of the job
+     * @param runtimeDirectory the service coordinate of the job
      * @param packageCoordinate the package coordinate of the job
-     * @param map holding key-value pairs that represent the parameters of the job
+     * @param params List of parameters to pass on to script
      */
     @JsonCreator
-    public Job(@JsonProperty("serviceCoordinate") String serviceCoordinate,
+    public Job(@JsonProperty("runtimeDirectory") String runtimeDirectory,
                @JsonProperty("packageCoordinate") String packageCoordinate,
-               @JsonProperty("params") Map<String, String> params) {
-        checkNotNull(serviceCoordinate);
+               @JsonProperty("params") List<String> params) {
+        checkNotNull(runtimeDirectory);
         checkNotNull(packageCoordinate);
         checkNotNull(params);
-        this.serviceCoordinate = serviceCoordinate;
+        this.runtimeDirectory = runtimeDirectory;
         this.packageCoordinate = packageCoordinate;
         this.params = params;
     }
 
-    public String getServiceCoordinate() {
-        return serviceCoordinate;
+    public String getRuntimeDirectory() {
+        return runtimeDirectory;
     }
 
     public String getPackageCoordinate() {
         return packageCoordinate;
     }
 
-    public Map<String, String> getParams() {
+    public List<String> getParams() {
         return params;
     }
 
@@ -91,32 +87,17 @@ public final class Job {
     }
 
     /**
-     * Get the parameters formatted as a command line options array.
-     * The parameters will always appear in lexical order for
-     * predictability.
-     *
-     * <i>If you find yourself tempted to just join this array by
-     * spaces beware that it isn't quite that simple.  You will have
-     * to re-add the quotation marks around arguments that contain
-     * whitespace.</i>
-     *
      * @return the parameters formatted as a command line option
      *   array.
      */
     @JsonIgnore // derived property
     public String[] getOptionArray() {
-        String[] optionArray = new String[params.size()];
-        int index = 0;
-        for (String key : new TreeSet<String>(params.keySet())) {
-            String value = params.get(key);
-            optionArray[index++] = "--" + key + ((value == null) ? "" : ("=" + value));
-        }
-        return optionArray;
+        return params.toArray(new String[] {});
     }
 
     @Override
     public int hashCode() {
-        return Objects.hashCode(serviceCoordinate, packageCoordinate, params);
+        return Objects.hashCode(runtimeDirectory, packageCoordinate, params);
     }
 
     @Override
@@ -127,7 +108,7 @@ public final class Job {
 
         final Job other = (Job) obj;
         return Objects.equal(packageCoordinate, other.packageCoordinate)
-            && Objects.equal(serviceCoordinate, other.serviceCoordinate)
+            && Objects.equal(runtimeDirectory, other.runtimeDirectory)
             && Objects.equal(params, other.params);
     }
 

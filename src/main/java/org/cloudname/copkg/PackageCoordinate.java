@@ -1,7 +1,6 @@
 package org.cloudname.copkg;
 
 import java.io.File;
-import java.net.URL;
 
 /**
  * Package coordinates borrow their structure, and rough semantics,

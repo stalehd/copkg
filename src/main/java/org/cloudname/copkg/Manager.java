@@ -11,13 +11,8 @@ import com.ning.http.client.simple.HeaderMap;
 import com.ning.http.client.simple.SimpleAHCTransferListener;
 
 import java.io.File;
-import java.io.IOException;
 import java.io.RandomAccessFile;
-import java.nio.ByteBuffer;
-import java.util.concurrent.ExecutionException;
-import java.util.logging.Level;
 import java.util.logging.Logger;
-import java.util.concurrent.Future;
 
 /**
  * Package Manager - provides methods for downloading, unpacking and

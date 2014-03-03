@@ -5,8 +5,6 @@ import org.cloudname.fire.JobRunner;
 import org.cloudname.fire.Result;
 
 import org.cloudname.copkg.util.LogSetup;
-import org.cloudname.copkg.util.Argument;
-import org.cloudname.copkg.util.ArgumentParser;
 
 import joptsimple.OptionParser;
 import joptsimple.OptionSet;
@@ -14,9 +12,8 @@ import joptsimple.OptionSpec;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
-import java.util.HashMap;
 import java.util.logging.Logger;
 
 /**
@@ -36,6 +33,7 @@ public class Main {
 
     // Last ditch defaults
     public static final String COPKG_HOME_PACKAGE_DIR = "packages";
+    public static final String COPKG_RUNTIME_DIR = "runtime";
     public static final String COPKG_DEFAULT_PACKAGE_URL = "http://packages.skunk-works.no/copkg";
 
     // Command line options
@@ -53,6 +51,9 @@ public class Main {
     private static OptionSpec<String> password =
         optionParser.accepts("password").withRequiredArg().ofType(String.class);
 
+    private static OptionSpec<String> runtimeBaseDir =
+        optionParser.accepts("runtime-base-dir").withRequiredArg().ofType(String.class);
+
     private static OptionSpec<Void> help = optionParser.accepts("help").forHelp();
 
     private static OptionSet optionSet;
@@ -60,19 +61,48 @@ public class Main {
     private Manager manager;
     private Configuration config;
 
+    private final List<String> scriptParameters;
+
     /**
      * Set up Main with appropriate configuration.
      */
-    public Main(Configuration config) {
+    public Main(Configuration config, final List<String> scriptParameters) {
         this.config = config;
         manager = new Manager(config);
+        this.scriptParameters = scriptParameters;
+    }
+
+    /**
+     * Extract command and service arguments into two separate arrays.
+     */
+    private static void splitParameters(final String[] args,
+                                        final List<String> commandParameters,
+                                        final List<String> serviceParameters) {
+        boolean otherParams = false;
+        for (final String parameter : args) {
+            if ("--".equals(parameter)) {
+                otherParams = true;
+                continue;
+            }
+            if (otherParams) {
+                serviceParameters.add(parameter);
+                continue;
+            }
+            commandParameters.add(parameter);
+        }
     }
 
     /**
      * Main entry point.
      */
     public static void main(String[] args) throws Exception {
-        optionSet = optionParser.parse(args);
+        // Strip off the service's arguments. This is separated by a double dash and
+        // everything after the double dash will be passed on to the service as parameters
+        final List<String> scriptParameters = new ArrayList<>();
+        final List<String> commandParameters = new ArrayList<>();
+        splitParameters(args, commandParameters, scriptParameters);
+
+        optionSet = optionParser.parse(commandParameters.toArray(new String[]{}));
 
         // if --help then bail at once
         if (optionSet.has(help)) {
@@ -83,15 +113,61 @@ public class Main {
         // Make logging usable for interactive users
         LogSetup.setup();
 
-        // TODO(borud): add explicit overrides to config so that we
-        // can specify config on the command line which will override
-        // all other config.
-        Configuration config = makeOrFindConfiguration();
+        final Configuration config = makeOrFindConfiguration();
 
-        Main m = new Main(config);
-        m.dispatch();
+        if (!doSanityCheckOnConfig(config)) {
+            return;
+        }
+        final Main m = new Main(config, scriptParameters);
+
+        final List<String> parameters = optionSet.nonOptionArguments();
+        if (parameters.size() == 0) {
+            // No commands and no parameters -- print help
+            printHelp();
+            return;
+        }
+
+        // Pop off the command, package name and runtimeId from the arguments.
+        // The order will always be the same.
+        final String command = parameters.get(0);
+        final String packageName = parameters.size() > 1 ? parameters.get(1) : null;
+        final String runtimeId = parameters.size() > 2 ? parameters.get(2) : null;
+        m.dispatch(command, packageName, runtimeId);
     }
 
+    /**
+     * The configuration object *might* have null values if the configuration file
+     * is out of date and we'd rather have error messages explaining the missing
+     * parameter than a nondescript NPE thrown somewhere in the code. Whenever a
+     * new parameter is added these checks must be updated.
+     */
+    private static boolean doSanityCheckOnConfig(final Configuration config) {
+        if (config.getUsername() == null) {
+            System.err.println("Missing user name in configuration.");
+            return false;
+        }
+        if (config.getPassword() == null) {
+            System.err.println("Missing password in configuration.");
+            return false;
+        }
+        if (config.getPackageBaseUrl() == null) {
+            System.err.println("Missing package base URL in configuration.");
+            return false;
+        }
+        if (config.getPackageDir() == null) {
+            System.err.println("Missing package directory in configuration.");
+            return false;
+        }
+        if (config.getDownloadDir() == null) {
+            System.err.println("Missing download directory in configuration.");
+            return false;
+        }
+        if (config.getRuntimeBaseDir() == null) {
+            System.err.println("Missing runtime base directory in configuration.");
+            return false;
+        }
+        return true;
+    }
 
     /**
      * We could have used the built-in help display in jopt-simple,
@@ -102,164 +178,143 @@ public class Main {
             "\n"
             + "Flags:\n"
             + "----------------------------------------------------------------------------------------------------\n"
-            + "    --package-dir=<dir>   : where to install packages\n"
-            + "    --repository=<dir>    : where to fetch packages from\n"
-            + "    --state-dir=<dir>     : where to to keep state when daemon\n"
-            + "    --port=<port number>  : which port to make REST interface available on\n"
-            + "    --username=<username> : username used for BASIC auth at repository\n"
-            + "    --password=<password> : password used for BASUC auth at repository\n"
+            + "    --package-dir=<dir>       : where to install packages\n"
+            + "    --repository=<dir>        : where to fetch packages from\n"
+            + "    --runtime-base-dir=<dir>  : where to to keep state when daemon\n"
+            + "    --username=<username>     : username used for BASIC auth at repository\n"
+            + "    --password=<password>     : password used for BASUC auth at repository\n"
             + "\n"
             + "Package commands:\n"
             + "----------------------------------------------------------------------------------------------------\n"
-            + "  copkg [flags] install <package coordinate>   : install the package\n"
-            + "  copkg [flags] uninstall <package coordinate> : uninstall the package\n"
-            + "  copkg [flags] resolve <package coordinate>   : print paths and URLs for a given package coordinate\n"
+            + "  copkg [flags] install <package coordinate>    : install the package\n"
+            + "  copkg [flags] uninstall <package coordinate>  : uninstall the package\n"
+            + "  copkg [flags] resolve <package coordinate>    : print paths and URLs for a given package coordinate\n"
             + "\n"
             + "Service lifecycle management:\n"
             + "----------------------------------------------------------------------------------------------------\n"
-            + "  copkg [flags] start <package coordinate> --runtime-dir=<dir> -- [start params]\n"
-            + "      : Start service with package coordinate in a given runtime directory.  Parameters\n"
+            + "  copkg [flags] start <package coordinate> <id> -- [start params]\n"
+            + "      : Start service with package coordinate with a given runtime id.  Parameters\n"
             + "        to service are added after the \"--\" marker\n"
             + "\n"
-            + "  copkg [flags] stop --runtime-dir=<dir>\n"
-            + "      : Stop service with a given runtime directory\n"
-            + "\n"
-            + "  copkg [flags] status --runtime-dir=<dir>\n"
-            + "      : Show status for a service with a given runtime directory\n"
-            + "\n"
-            + "  copkg [flags] daemon [--state-dir=<dir> --port=<port number>]\n"
-            + "      : Become daemon\n"
+            + "  copkg [flags] stop <package coordinate> <id>\n"
+            + "      : Stop service with a given runtime id.\n"
             + "\n"
         );
     }
 
     /**
      * Dispatch commands.
-     *
-     * <p>
-     * This method is a bit more convoluted than one would think was
-     * necessary.  However, this has to do with the fact that we are
-     * going to handle commands as well as command line options that
-     * are not parsed as command line options.  Fun, eh?
      */
-    private void dispatch() throws Exception {
-        // Deal with the non-option arguments
-        List<Argument> arguments = ArgumentParser.parse(optionSet.nonOptionArguments().toArray(new String[] {}));
+    private void dispatch(final String command, final String packageName, final String runtimeId) throws Exception {
 
-        // Make sure we at least have a command
-        if (arguments.size() == 0) {
+        if ("install".equals(command)) {
+            if (packageName == null) {
+                System.err.println("\ninstall error: expected package coordinate as argument");
+                return;
+            }
+            install(packageName);
+            return;
+        }
+
+        if ("uninstall".equals(command)) {
+            if (packageName == null) {
+                System.err.println("\nuninstall error: expected package coordinate as argument");
+                return;
+            }
+
+            uninstall(packageName);
+            return;
+        }
+
+        if ("resolve".equals(command)) {
+            if (packageName == null) {
+                System.err.println("\nresolve error: expected coordinate as argument");
+                return;
+            }
+            resolve(packageName);
+            return;
+        }
+
+        if ("start".equals(command)) {
+            if (packageName == null || runtimeId == null) {
+                System.err.println("\nstart: expected package coordinate and runtime id");
+                return;
+            }
+
+            start(packageName, runtimeId);
+            return;
+        }
+
+        if ("stop".equals(command)) {
+            if (packageName == null || runtimeId == null) {
+                System.err.println("\nstop: expected package coordinate and runtime id");
+                return;
+            }
+
+            stop(packageName, runtimeId);
+            return;
+        }
+
+        if ("status".equals(command)) {
+            System.out.println("\nNot implemented yet: " + command);
             printHelp();
             return;
         }
 
-        // The first non-option argument is a command
-        Argument command = arguments.remove(0);
-        assert("".equals(command.getPrefix()));
-        assert(command.getValue() == null);
-
-        if ("install".equals(command.getOption())) {
-            if (arguments.size() == 0) {
-                System.out.println("\ninstall error: expected coordinate as argument");
-                return;
-            }
-
-            Argument coordinateArgument = arguments.remove(0);
-            assert("".equals(coordinateArgument.getPrefix()));
-            assert(coordinateArgument.getValue() == null);
-            install(coordinateArgument.getOption());
-            return;
-        }
-
-        if ("uninstall".equals(command.getOption())) {
-            if (arguments.size() == 0) {
-                System.out.println("\nuninstall error: expected coordinate as argument");
-                return;
-            }
-
-            Argument coordinateArgument = arguments.remove(0);
-            assert("".equals(coordinateArgument.getPrefix()));
-            assert(coordinateArgument.getValue() == null);
-            uninstall(coordinateArgument.getOption());
-            return;
-        }
-
-        if ("resolve".equals(command.getOption())) {
-            if (arguments.size() == 0) {
-                System.out.println("\nresolve error: expected coordinate as argument");
-                return;
-            }
-
-            Argument coordinateArgument = arguments.remove(0);
-            assert("".equals(coordinateArgument.getPrefix()));
-            assert(coordinateArgument.getValue() == null);
-            resolve(coordinateArgument.getOption());
-            return;
-        }
-
-        // TODO(borud): implement.
-        if ("start".equals(command.getOption())) {
-            if (arguments.size() < 2) {
-                System.out.println("\nstart: expected package coordinate and service coordinate");
-                return;
-            }
-
-            Argument packageCoordinate = arguments.remove(0);
-            assert("".equals(packageCoordinate.getPrefix()));
-            assert(packageCoordinate.getValue() == null);
-
-            Argument serviceCoordinate = arguments.remove(0);
-            assert("".equals(serviceCoordinate.getPrefix()));
-            assert(serviceCoordinate.getValue() == null);
-
-            final Map<String,String> params = new HashMap<String,String>();
-            for (Argument arg : arguments) {
-                // The rest of the arguments here should be real arguments
-                // that are prefixed by "--".  If they are not we kick up
-                // a fuss.  It is better to try to force consistency now
-                // than to try to reverse bad practices later.
-                if (! "--".equals(arg.getPrefix())) {
-                    throw new IllegalArgumentException("Argument did not start with '--', please be consistent");
-                }
-
-                params.put(arg.getOption(), arg.getValue());
-            }
-
-            final Job job = new Job(packageCoordinate.getOption(),
-                                    serviceCoordinate.getOption(),
-                                    params);
-
-            // Run the job!
-            final Result result = new JobRunner(config).runJob(job);
-            System.out.println(result.toString());
-            return;
-        }
-
-        // TODO(borud): implement.
-        if ("stop".equals(command.getOption())) {
-            System.out.println("\nNot implemented yet: " + command.getOption());
+        if ("daemon".equals(command)) {
+            System.out.println("\nNot implemented yet: " + command);
             printHelp();
             return;
         }
 
-        // TODO(borud): implement.
-        if ("status".equals(command.getOption())) {
-            System.out.println("\nNot implemented yet: " + command.getOption());
-            printHelp();
-            return;
-        }
-
-        // TODO(borud): implement.
-        if ("daemon".equals(command.getOption())) {
-            System.out.println("\nNot implemented yet: " + command.getOption());
-            printHelp();
-            return;
-        }
-
-        System.out.println("\nUnknown command: " + command.getOption());
+        System.err.println("\nUnknown command: " + command);
 
         printHelp();
     }
 
+    /**
+     * Stop the service.
+     */
+    private void stop(final String packageCoordinate, final String runtimeId) {
+        final File rtDir = new File(config.getRuntimeBaseDir() + File.pathSeparator + runtimeId);
+        if (!rtDir.isDirectory()) {
+            if (!rtDir.mkdir()) {
+                System.err.println("\nCould create runtime directory " + rtDir.getAbsolutePath() + ".");
+                return;
+            }
+        }
+
+        final Job job = new Job(
+                rtDir.getAbsolutePath(),
+                packageCoordinate,
+                scriptParameters);
+
+        // Run the job!
+        final Result result = new JobRunner(config).runJob(job, JobRunner.STOP_SCRIPT);
+        System.out.println(result.toString());
+    }
+    /**
+     * Start the service.
+     */
+    private void start(final String packageCoordinate, final String runtimeId) {
+        final File rtDir = new File(config.getRuntimeBaseDir() + File.pathSeparator + runtimeId);
+        if (!rtDir.isDirectory()) {
+            // Create the runtime directory if it doesn't exist
+            if (!rtDir.mkdir()) {
+                System.err.println("\nCould not create runtime directory " + rtDir.getAbsolutePath() + ".");
+                return;
+            }
+        }
+
+        final Job job = new Job(
+                rtDir.getAbsolutePath(),
+                packageCoordinate,
+                scriptParameters);
+
+        // Run the job!
+        final Result result = new JobRunner(config).runJob(job, JobRunner.START_SCRIPT);
+        System.out.println(result.toString());
+    }
 
     /**
      * Install package.
@@ -290,7 +345,8 @@ public class Main {
     private void resolve(String coordinateString) {
         PackageCoordinate coordinate = PackageCoordinate.parse(coordinateString);
         System.out.println("");
-        System.out.println("installDir       = " + config.getPackageDir() + File.separatorChar + coordinate.getPathFragment());
+        System.out.println("installDir       = "
+                + config.getPackageDir() + File.separatorChar + coordinate.getPathFragment());
         System.out.println("downloadUrl      = " + coordinate.toUrl(config.getPackageBaseUrl()));
         System.out.println("downloadFilename = " + config.downloadFilenameForCoordinate(coordinate));
         System.out.println("");
@@ -303,24 +359,35 @@ public class Main {
      *
      */
     private static Configuration makeOrFindConfiguration() throws IOException {
-        String installDir = System.getProperty("user.home") + File.separatorChar + COPKG_HOME_PACKAGE_DIR;
-        String reposUrl = COPKG_DEFAULT_PACKAGE_URL;
-        Configuration c = new Configuration(installDir, reposUrl, "", "");
+        final String defaultInstallDir
+                = System.getProperty("user.home") + File.separatorChar + COPKG_HOME_PACKAGE_DIR;
+        final String defaultReposUrl = COPKG_DEFAULT_PACKAGE_URL;
+        final String defaultUserName = "";
+        final String defaultPassword = "";
+        final String defaultRuntimeBaseDir
+                = System.getProperty("user.home") + File.separatorChar + COPKG_RUNTIME_DIR;
 
-        File etc = new File("/etc/" + COPKG_ETC_DIR + "/" + COPKG_CONFIG_FILE);
+        Configuration c = new Configuration(
+                defaultInstallDir,
+                defaultReposUrl,
+                defaultUserName,
+                defaultPassword,
+                defaultRuntimeBaseDir);
+
+        final File etc = new File("/etc/" + COPKG_ETC_DIR + "/" + COPKG_CONFIG_FILE);
         if (etc.exists()) {
-            log.info("Getting configuration from " + etc.getAbsolutePath());
+            log.fine("Getting configuration from " + etc.getAbsolutePath());
             c = Configuration.fromFile(etc);
         }
 
-        File home = new File(
+        final File home = new File(
             System.getProperty("user.home")
             + File.separatorChar
             + COPKG_USER_DIR
             + File.separatorChar
             + COPKG_CONFIG_FILE);
         if (home.exists()) {
-            log.info("Getting configuration from " + home.getAbsolutePath());
+            log.fine("Getting configuration from " + home.getAbsolutePath());
             c = Configuration.fromFile(home);
         }
 
@@ -332,30 +399,41 @@ public class Main {
             c = new Configuration(optionSet.valueOf(packageDir),
                                   c.getPackageBaseUrl(),
                                   c.getUsername(),
-                                  c.getPassword());
+                                  c.getPassword(),
+                                  c.getRuntimeBaseDir());
         }
 
         if (optionSet.has(repository)) {
             c = new Configuration(c.getPackageDir(),
                                   optionSet.valueOf(repository),
                                   c.getUsername(),
-                                  c.getPassword());
+                                  c.getPassword(),
+                                  c.getRuntimeBaseDir());
         }
 
         if (optionSet.has(username)) {
             c = new Configuration(c.getPackageDir(),
                                   c.getPackageBaseUrl(),
                                   optionSet.valueOf(username),
-                                  c.getPassword());
+                                  c.getPassword(),
+                                  c.getRuntimeBaseDir());
         }
 
         if (optionSet.has(password)) {
             c = new Configuration(c.getPackageDir(),
                                   c.getPackageBaseUrl(),
                                   c.getUsername(),
-                                  optionSet.valueOf(password));
+                                  optionSet.valueOf(password),
+                                  c.getRuntimeBaseDir());
         }
 
+        if (optionSet.has(runtimeBaseDir)) {
+            c = new Configuration(c.getPackageDir(),
+                    c.getPackageBaseUrl(),
+                    c.getUsername(),
+                    c.getPassword(),
+                    optionSet.valueOf(runtimeBaseDir));
+        }
         return c;
     }
 }
