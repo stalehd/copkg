@@ -1,11 +1,7 @@
 package org.cloudname.copkg.util;
 
-import org.apache.commons.compress.archivers.tar.TarArchiveEntry;
-import org.apache.commons.compress.archivers.tar.TarArchiveInputStream;
 import org.apache.commons.compress.archivers.zip.ZipArchiveEntry;
-import org.apache.commons.compress.archivers.zip.ZipArchiveOutputStream;
 import org.apache.commons.compress.archivers.zip.ZipFile;
-import org.apache.commons.compress.compressors.gzip.GzipCompressorInputStream;
 
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -16,7 +12,6 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.FileOutputStream;
 
-import java.util.logging.Level;
 import java.util.logging.Logger;
 
 /**

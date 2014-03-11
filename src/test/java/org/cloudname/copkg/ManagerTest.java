@@ -1,7 +1,5 @@
 package org.cloudname.copkg;
 
-import com.ning.http.client.Response;
-
 import java.io.File;
 import java.util.logging.Logger;
 
@@ -34,7 +32,7 @@ public class ManagerTest {
         String baseUrl = "http://localhost:" + port;
         File packageFolder = testFolder.newFolder("packages");
 
-        config = new Configuration(packageFolder.getAbsolutePath(), baseUrl, "foo", "bar");
+        config = new Configuration(packageFolder.getAbsolutePath(), baseUrl, "foo", "bar", "baz");
 
         httpServer = new StaticHttpServer(port, "src/test/resources/staticroot");
         httpServer.start();

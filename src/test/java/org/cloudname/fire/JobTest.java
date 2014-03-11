@@ -2,37 +2,31 @@ package org.cloudname.fire;
 
 import com.google.common.testing.EqualsTester;
 
+import java.util.Arrays;
+import java.util.List;
 import java.util.Map;
 import java.util.HashMap;
 
 import org.junit.*;
 import static org.junit.Assert.*;
-
+import static org.hamcrest.CoreMatchers.is;
 /**
  * Unit tests for Job class.
  *
  * @author borud
  */
 public class JobTest {
-    private static final String serviceCoordinate = "1.service.user.dc";
+    private static final String runtimeDirectory = "/home/foo/bar";
     private static final String packageCoordinate = "com.example:artifact:2.2.1";
-    private static final Map params = new HashMap() {{
-        put("alpha-key", "alpha value");
-        put("beta-key", "beta value");
-        put("gamma-key", "gamma value");
-        // option that takes parameter but is empty
-        put("delta-key", "");
-        // option that does not take parameter but is present
-        put("9", null);
-    }};
-
     private static final String[] PARAMS_AS_OPTION_ARRAY = {
-        "--9",
-        "--alpha-key=alpha value",
-        "--beta-key=beta value",
-        "--delta-key=",
-        "--gamma-key=gamma value"
+            "--9",
+            "--alpha-key=alpha value",
+            "--beta-key=beta value",
+            "--delta-key=",
+            "--gamma-key=gamma value"
     };
+    private static final List<String> params = Arrays.asList(PARAMS_AS_OPTION_ARRAY);
+
 
     /**
      * Just a very simple test that proves we can serialize and then
@@ -40,7 +34,7 @@ public class JobTest {
      */
     @Test
     public void testJson() throws Exception {
-        Job job = new Job(serviceCoordinate, packageCoordinate, params);
+        Job job = new Job(runtimeDirectory, packageCoordinate, params);
         Job job2 = Job.parse(job.toJson());
 
         assertNotNull(job2);
@@ -51,8 +45,9 @@ public class JobTest {
 
     @Test
     public void testParamArray() throws Exception {
-        Job job = new Job(serviceCoordinate, packageCoordinate, params);
-        assertEquals(PARAMS_AS_OPTION_ARRAY, job.getOptionArray());
+        Job job = new Job(runtimeDirectory, packageCoordinate, params);
+
+        assertThat(PARAMS_AS_OPTION_ARRAY, is(job.getOptionArray()));
     }
 
     @Test(expected = NullPointerException.class)
@@ -68,8 +63,8 @@ public class JobTest {
     @Test
     public void testEquals() throws Exception {
         new EqualsTester()
-            .addEqualityGroup(new Job("1.test.user.dc", "group:artifact:1.2.3", params),
-                              new Job("1.test.user.dc", "group:artifact:1.2.3", params))
+            .addEqualityGroup(new Job("/the/working/directory/too", "group:artifact:1.2.3", params),
+                              new Job("/the/working/directory/too", "group:artifact:1.2.3", params))
             .testEquals();
 
 

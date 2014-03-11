@@ -26,6 +26,7 @@ public class Configuration {
     private String packageBaseUrl;
     private String username;
     private String password;
+    private String runtimeBaseDir;
 
     /**
      * Constructor for package manager configuration.
@@ -39,12 +40,14 @@ public class Configuration {
     public Configuration(@JsonProperty("packageDir") String packageDir,
                          @JsonProperty("packageBaseUrl") String packageBaseUrl,
                          @JsonProperty("username") String username,
-                         @JsonProperty("password") String password)
+                         @JsonProperty("password") String password,
+                         @JsonProperty("runtimeBaseDir") String runtimeBaseDir)
     {
         this.packageDir = checkNotNull(packageDir);
         this.packageBaseUrl = checkNotNull(packageBaseUrl);
         this.username = checkNotNull(username);
         this.password = checkNotNull(password);
+        this.runtimeBaseDir = runtimeBaseDir;
 
         // Populate this but don't touch filesystem
         downloadDir = packageDir + (packageDir.endsWith("/") ? "" : "/") + DOWNLOAD_DIR;
@@ -90,6 +93,11 @@ public class Configuration {
     }
 
     /**
+     * @return the runtime directory to run packages in
+     */
+    public String getRuntimeBaseDir() { return runtimeBaseDir; }
+
+    /**
      * Destination file path inside the download directory for the coordinate.
      *
      * @param coordinate the package coordinate.
@@ -129,7 +137,6 @@ public class Configuration {
      * @return Configuration instance based on JSON string.
      */
     public static Configuration fromJson(String json) throws IOException {
-        final ObjectMapper mapper = new ObjectMapper();
         return new ObjectMapper().readValue(json, Configuration.class);
     }
 
@@ -154,11 +161,12 @@ public class Configuration {
         return Objects.equal(packageDir, other.packageDir)
             && Objects.equal(packageBaseUrl, other.packageBaseUrl)
             && Objects.equal(username, other.username)
-            && Objects.equal(password, other.password);
+            && Objects.equal(password, other.password)
+            && Objects.equal(runtimeBaseDir, other.runtimeBaseDir);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hashCode(packageDir, packageBaseUrl, username, password);
+        return Objects.hashCode(packageDir, packageBaseUrl, username, password, runtimeBaseDir);
     }
 }

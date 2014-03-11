@@ -18,6 +18,7 @@ public class ConfigurationTest {
     private static final String baseUrl = "http://localhost/packages";
     private static final String username = "foo";
     private static final String password = "bar";
+    private static final String runtimeDir = "/var/for/runtime";
 
     private static final PackageCoordinate coordinate = new PackageCoordinate(
         "org.cloudname",
@@ -25,7 +26,7 @@ public class ConfigurationTest {
         "1.2.3"
     );
 
-    Configuration config = new Configuration(packageDir, baseUrl, username, password);
+    Configuration config = new Configuration(packageDir, baseUrl, username, password, runtimeDir);
 
     /**
      * Test that the paths turn out as expected.
@@ -83,8 +84,8 @@ public class ConfigurationTest {
         // I'm not sure of the quality of this test.  It should have a
         // negative as well.
         new EqualsTester()
-            .addEqualityGroup(new Configuration(packageDir, baseUrl, username, password),
-                              new Configuration(packageDir, baseUrl, username, password))
+            .addEqualityGroup(new Configuration(packageDir, baseUrl, username, password, runtimeDir),
+                              new Configuration(packageDir, baseUrl, username, password, runtimeDir))
             .testEquals();
     }
 }
